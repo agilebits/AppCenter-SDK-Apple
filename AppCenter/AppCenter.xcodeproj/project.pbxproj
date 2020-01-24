@@ -3248,8 +3248,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 049BC8281ECE3A5200FB6719 /* iOS.xcconfig */;
 			buildSettings = {
-				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -3257,8 +3255,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 049BC8281ECE3A5200FB6719 /* iOS.xcconfig */;
 			buildSettings = {
-				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
