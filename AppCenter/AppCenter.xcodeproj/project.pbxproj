@@ -225,6 +225,12 @@
 		9237B60C2244407000C273D8 /* MSHttpClientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9237B60B2244407000C273D8 /* MSHttpClientTests.m */; };
 		9237B60D2244407000C273D8 /* MSHttpClientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9237B60B2244407000C273D8 /* MSHttpClientTests.m */; };
 		9237B60E2244407000C273D8 /* MSHttpClientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9237B60B2244407000C273D8 /* MSHttpClientTests.m */; };
+		9364A2D023DB8AA1001919F4 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9364A2CF23DB8AA1001919F4 /* Security.framework */; };
+		9364A2D223DB8AE4001919F4 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9364A2D123DB8AE4001919F4 /* Security.framework */; };
+		9364A2D423DB8AEC001919F4 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9364A2D323DB8AEC001919F4 /* Security.framework */; };
+		9364A2D623DB8B60001919F4 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9364A2D523DB8B60001919F4 /* UIKit.framework */; };
+		9364A2D823DB8B6A001919F4 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9364A2D723DB8B6A001919F4 /* AppKit.framework */; };
+		9364A2DA23DB8B70001919F4 /* TVUIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9364A2D923DB8B70001919F4 /* TVUIKit.framework */; };
 		9CB67DAC22139A0B006E20AC /* MSAuthTokenContextTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9CB67DAB22139A0B006E20AC /* MSAuthTokenContextTests.m */; };
 		9CB67DAD22139A0B006E20AC /* MSAuthTokenContextTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9CB67DAB22139A0B006E20AC /* MSAuthTokenContextTests.m */; };
 		9CB67DAE22139A0B006E20AC /* MSAuthTokenContextTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9CB67DAB22139A0B006E20AC /* MSAuthTokenContextTests.m */; };
@@ -1085,6 +1091,12 @@
 		87F7AB21BD187EFD83F7F15E /* MSAuthTokenValidityInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MSAuthTokenValidityInfo.m; sourceTree = "<group>"; };
 		87F7B696F92E973BB1FCD190 /* MSAuthTokenValidityInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSAuthTokenValidityInfo.h; sourceTree = "<group>"; };
 		9237B60B2244407000C273D8 /* MSHttpClientTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MSHttpClientTests.m; sourceTree = "<group>"; };
+		9364A2CF23DB8AA1001919F4 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		9364A2D123DB8AE4001919F4 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
+		9364A2D323DB8AEC001919F4 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS13.2.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
+		9364A2D523DB8B60001919F4 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		9364A2D723DB8B6A001919F4 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/AppKit.framework; sourceTree = DEVELOPER_DIR; };
+		9364A2D923DB8B70001919F4 /* TVUIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = TVUIKit.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS13.2.sdk/System/Library/Frameworks/TVUIKit.framework; sourceTree = DEVELOPER_DIR; };
 		9C02498021A4BF3800C7B887 /* MSUserIdContextTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MSUserIdContextTests.m; sourceTree = "<group>"; };
 		9CB67D9F2213790A006E20AC /* MSAuthTokenContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSAuthTokenContext.h; sourceTree = "<group>"; };
 		9CB67DA322137936006E20AC /* MSAuthTokenContext.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MSAuthTokenContext.m; sourceTree = "<group>"; };
@@ -1239,6 +1251,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9364A2D023DB8AA1001919F4 /* Security.framework in Frameworks */,
+				9364A2D623DB8B60001919F4 /* UIKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1246,6 +1260,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9364A2D223DB8AE4001919F4 /* Security.framework in Frameworks */,
+				9364A2D823DB8B6A001919F4 /* AppKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1253,6 +1269,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9364A2D423DB8AEC001919F4 /* Security.framework in Frameworks */,
+				9364A2DA23DB8B70001919F4 /* TVUIKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1751,6 +1769,12 @@
 		C934BFBF230AC17500083490 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9364A2D923DB8B70001919F4 /* TVUIKit.framework */,
+				9364A2D723DB8B6A001919F4 /* AppKit.framework */,
+				9364A2D523DB8B60001919F4 /* UIKit.framework */,
+				9364A2D323DB8AEC001919F4 /* Security.framework */,
+				9364A2D123DB8AE4001919F4 /* Security.framework */,
+				9364A2CF23DB8AA1001919F4 /* Security.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
