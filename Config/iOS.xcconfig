@@ -2,7 +2,7 @@ APPCENTER_SDK_NAME = appcenter.ios
 SDKROOT = iphoneos
 SUPPORTS_MACCATALYST = NO
 TARGETED_DEVICE_FAMILY = 1,2
-PRE_XCODE_10_1_ARCHS = armv7 armv7s arm64
+PRE_XCODE_10_1_ARCHS = arm64
 ARCHS[sdk=iphoneos*] = $(PRE_XCODE_10_1_ARCHS) arm64e
 ARCHS[sdk=iphoneos9.*] = $(PRE_XCODE_10_1_ARCHS)
 ARCHS[sdk=iphoneos10.*] = $(PRE_XCODE_10_1_ARCHS)
