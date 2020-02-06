@@ -2446,7 +2446,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = MS;
-				LastUpgradeCheck = 0830;
+				LastUpgradeCheck = 1130;
 				ORGANIZATIONNAME = Microsoft;
 				TargetAttributes = {
 					C9A91FB5230C01140068070D = {
@@ -2466,11 +2466,11 @@
 			};
 			buildConfigurationList = 6E0400FE1D1C98220051BCFA /* Build configuration list for PBXProject "AppCenter" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
+				Base,
 			);
 			mainGroup = 6E0400FA1D1C98220051BCFA;
 			productRefGroup = 6E0401041D1C98220051BCFA /* Products */;
@@ -3216,6 +3216,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 6E0401841D1CAD810051BCFA /* AppCenter Debug.xcconfig */;
 			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 			};
 			name = Debug;
 		};
@@ -3223,6 +3224,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 0469D1B11F4DF89A00A43A8E /* AppCenter Release.xcconfig */;
 			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 			};
 			name = Release;
 		};
