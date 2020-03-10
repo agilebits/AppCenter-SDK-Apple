@@ -2303,7 +2303,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 6E37297F1D1DE93800F1E4AE /* AppCenterCrashes Debug.xcconfig */;
 			buildSettings = {
-				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 			};
 			name = Debug;
 		};
@@ -2311,7 +2310,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 0469D1B31F4E013C00A43A8E /* AppCenterCrashes Release.xcconfig */;
 			buildSettings = {
-				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 			};
 			name = Release;
 		};
