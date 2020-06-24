@@ -7,6 +7,7 @@
 #import "MSChannelUnitConfiguration.h"
 #import "MSChannelUnitDefault.h"
 #import "MSCommonSchemaLog.h"
+#import "MSHttpClient.h"
 #import "MSIngestionProtocol.h"
 #import "MSMockLogObject.h"
 #import "MSMockLogWithConversion.h"
@@ -18,6 +19,10 @@
 
 static NSString *const kMSBaseGroupId = @"baseGroupId";
 static NSString *const kMSOneCollectorGroupId = @"baseGroupId/one";
+
+// This is to get rid of warnings in the test that a method takes `nil` as its parameter even though it is marked as `nonnull`.
+// Do not convert it to const.
+static NSString *kMSNilString = nil;
 
 @interface MSOneCollectorChannelDelegateTests : XCTestCase
 
@@ -34,7 +39,7 @@ static NSString *const kMSOneCollectorGroupId = @"baseGroupId/one";
 
 - (void)setUp {
   [super setUp];
-  self.sut = [[MSOneCollectorChannelDelegate alloc] initWithInstallId:[NSUUID new] baseUrl:nil];
+  self.sut = [[MSOneCollectorChannelDelegate alloc] initWithHttpClient:[MSHttpClient new] installId:[NSUUID new] baseUrl:kMSNilString];
   self.ingestionMock = OCMProtocolMock(@protocol(MSIngestionProtocol));
   self.storageMock = OCMProtocolMock(@protocol(MSStorage));
   self.logsDispatchQueue = dispatch_get_main_queue();
@@ -321,8 +326,8 @@ static NSString *const kMSOneCollectorGroupId = @"baseGroupId/one";
   OCMStub([channelGroupMock addChannelUnitWithConfiguration:OCMOCK_ANY withIngestion:OCMOCK_ANY]).andReturn(oneCollectorChannelUnitMock);
   NSMutableSet *transmissionTargetTokens = [NSMutableSet new];
   [transmissionTargetTokens addObject:@"fake-transmission-target-token"];
-  id<MSLog> commonSchemaLog = [MSCommonSchemaLog new];
-  OCMStub(commonSchemaLog.transmissionTargetTokens).andReturn(transmissionTargetTokens);
+  id commonSchemaLog = OCMPartialMock([MSCommonSchemaLog new]);
+  OCMStub([commonSchemaLog transmissionTargetTokens]).andReturn(transmissionTargetTokens);
 
   // When
   [self.sut channelGroup:channelGroupMock didAddChannelUnit:channelUnitMock];
@@ -351,7 +356,6 @@ static NSString *const kMSOneCollectorGroupId = @"baseGroupId/one";
   id<MSMockLogWithConversion> mockLog = OCMProtocolMock(@protocol(MSMockLogWithConversion));
   OCMStub(mockLog.transmissionTargetTokens).andReturn(transmissionTargetTokens);
   OCMStub([mockLog toCommonSchemaLogsWithFlags:MSFlagsDefault]).andReturn(@ [[MSCommonSchemaLog new]]);
-  OCMStub([mockLog isKindOfClass:[MSCommonSchemaLog class]]).andReturn(NO);
 
   // Then
   OCMReject([oneCollectorChannelUnitMock enqueueItem:OCMOCK_ANY flags:MSFlagsDefault]);
@@ -370,7 +374,6 @@ static NSString *const kMSOneCollectorGroupId = @"baseGroupId/one";
   id<MSChannelUnitProtocol> oneCollectorChannelUnitMock = OCMProtocolMock(@protocol(MSChannelUnitProtocol));
   OCMStub([channelGroupMock addChannelUnitWithConfiguration:OCMOCK_ANY withIngestion:OCMOCK_ANY]).andReturn(oneCollectorChannelUnitMock);
   id<MSMockLogWithConversion> mockLog = OCMProtocolMock(@protocol(MSMockLogWithConversion));
-  OCMStub([mockLog isKindOfClass:[MSCommonSchemaLog class]]).andReturn(NO);
   OCMStub(mockLog.transmissionTargetTokens).andReturn(nil);
   OCMStub([mockLog toCommonSchemaLogsWithFlags:MSFlagsDefault]).andReturn(@ [[MSCommonSchemaLog new]]);
 
@@ -541,7 +544,7 @@ static NSString *const kMSOneCollectorGroupId = @"baseGroupId/one";
 
   // If
   NSUUID *installId = [NSUUID new];
-  self.sut = [[MSOneCollectorChannelDelegate alloc] initWithInstallId:installId baseUrl:nil];
+  self.sut = [[MSOneCollectorChannelDelegate alloc] initWithHttpClient:[MSHttpClient new] installId:installId baseUrl:kMSNilString];
   id channelMock = OCMProtocolMock(@protocol(MSChannelProtocol));
   MSCommonSchemaLog *csLogMock = OCMPartialMock([MSCommonSchemaLog new]);
   csLogMock.iKey = @"o:81439696f7164d7599d543f9bf37abb7";

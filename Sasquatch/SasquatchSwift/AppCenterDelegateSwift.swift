@@ -4,20 +4,23 @@
 import AppCenter
 import AppCenterAnalytics
 import AppCenterCrashes
-import AppCenterData
+#if canImport(AppCenterDistribute)
 import AppCenterDistribute
-import AppCenterAuth
-import AppCenterPush
 
 /**
  * Selectors for reflection.
  */
 @objc protocol Selectors {
   func sharedInstance() -> MSDistribute
+  func checkForUpdate()
   func showConfirmationAlert(_ releaseDetails: MSReleaseDetails)
   func showDistributeDisabledAlert()
   func delegate() -> MSDistributeDelegate
 }
+#endif
+#if canImport(AppCenterPush)
+import AppCenterPush
+#endif
 
 /**
  * AppCenterDelegate implementation in Swift.
@@ -42,15 +45,11 @@ class AppCenterDelegateSwift: AppCenterDelegate {
   }
 
   func appSecret() -> String {
+#if !targetEnvironment(macCatalyst)
     return kMSSwiftAppSecret
-  }
-  
-  func appSecretAAD() -> String {
-    return kMSSwiftObjcAADAppSecret
-  }
-  
-  func appSecretB2C() -> String {
-    return kMSSwiftAppSecret
+#else
+    return kMSSwiftCatalystAppSecret
+#endif
   }
 
   func setLogUrl(_ logUrl: String?) {
@@ -87,15 +86,19 @@ class AppCenterDelegateSwift: AppCenterDelegate {
   }
 
   func isDistributeEnabled() -> Bool {
+#if canImport(AppCenterDistribute)
     return MSDistribute.isEnabled()
-  }
-
-  func isAuthEnabled() -> Bool {
-    return MSAuth.isEnabled()
+#else
+    return false
+#endif
   }
 
   func isPushEnabled() -> Bool {
+#if canImport(AppCenterPush)
     return MSPush.isEnabled()
+#else
+    return false
+#endif
   }
 
   func setAnalyticsEnabled(_ isEnabled: Bool) {
@@ -107,15 +110,15 @@ class AppCenterDelegateSwift: AppCenterDelegate {
   }
 
   func setDistributeEnabled(_ isEnabled: Bool) {
+#if canImport(AppCenterDistribute)
     MSDistribute.setEnabled(isEnabled)
-  }
-
-  func setAuthEnabled(_ isEnabled: Bool) {
-    MSAuth.setEnabled(isEnabled)
+#endif
   }
 
   func setPushEnabled(_ isEnabled: Bool) {
+#if canImport(AppCenterPush)
     MSPush.setEnabled(isEnabled)
+#endif
   }
 
   // MSAnalytics section.
@@ -171,7 +174,15 @@ class AppCenterDelegateSwift: AppCenterDelegate {
   }
 
   // MSDistribute section.
+
+  func checkForUpdate() {
+#if canImport(AppCenterDistribute)
+    MSDistribute.checkForUpdate()
+#endif
+  }
+
   func showConfirmationAlert() {
+#if canImport(AppCenterDistribute)
     let sharedInstanceSelector = #selector(Selectors.sharedInstance)
     let confirmationAlertSelector = #selector(Selectors.showConfirmationAlert(_:))
     let releaseDetails = MSReleaseDetails();
@@ -183,9 +194,11 @@ class AppCenterDelegateSwift: AppCenterDelegate {
         _ = distributeInstance.perform(confirmationAlertSelector, with: releaseDetails)
       }
     }
+#endif
   }
 
   func showDistributeDisabledAlert() {
+#if canImport(AppCenterDistribute)
     let sharedInstanceSelector = #selector(Selectors.sharedInstance)
     let disabledAlertSelector = #selector(Selectors.showDistributeDisabledAlert)
     if (MSDistribute.responds(to: sharedInstanceSelector)) {
@@ -194,9 +207,11 @@ class AppCenterDelegateSwift: AppCenterDelegate {
         _ = distributeInstance.perform(disabledAlertSelector)
       }
     }
+#endif
   }
 
   func showCustomConfirmationAlert() {
+#if canImport(AppCenterDistribute)
     let sharedInstanceSelector = #selector(Selectors.sharedInstance)
     let delegateSelector = #selector(Selectors.delegate)
     let releaseDetails = MSReleaseDetails();
@@ -207,25 +222,7 @@ class AppCenterDelegateSwift: AppCenterDelegate {
       let distriuteDelegate = distributeInstance.perform(delegateSelector).takeUnretainedValue()
       _ = distriuteDelegate.distribute?(distributeInstance as? MSDistribute, releaseAvailableWith: releaseDetails)
     }
-  }
-
-  // MSAuth section.
-  func signIn(_ completionHandler: @escaping (_ signInInformation:MSUserInformation?, _ error:Error?) -> Void) {
-    MSAuth.signIn { userInformation, error in
-      if error == nil {
-        UserDefaults.standard.set(true, forKey: kMSUserIdentity)
-        print("Auth.signIn succeeded, accountId=\(userInformation?.accountId ?? "nil")")
-      }
-      else {
-        print("Auth.signIn failed, error=\(String(describing: error))")
-      }
-      completionHandler(userInformation, error)
-    }
-  }
-
-  func signOut() {
-    MSAuth.signOut()
-    UserDefaults.standard.set(false, forKey: kMSUserIdentity)
+#endif
   }
 
   // Last crash report section.
@@ -316,29 +313,4 @@ class AppCenterDelegateSwift: AppCenterDelegate {
   func lastCrashReportDeviceAppNamespace() -> String? {
     return MSCrashes.lastSessionCrashReport()?.device.appNamespace
   }
-  
-  // MSData
-  
-  func listDocumentsWithPartition(_ partitionName: String, documentType: AnyClass, completionHandler: @escaping (_ paginatedDocuments:MSPaginatedDocuments) -> Void) {
-    MSData.listDocuments(withType: documentType, partition: partitionName, completionHandler: completionHandler)
-  }
-  
-  func createDocumentWithPartition(_ partitionName: String, documentId: String, document: MSDictionaryDocument, writeOptions: MSWriteOptions, completionHandler: @escaping (_ document:MSDocumentWrapper) -> Void) {
-    MSData.create(withDocumentID: documentId, document: document, partition: partitionName, completionHandler: completionHandler);
-  }
-  
-  func replaceDocumentWithPartition(_ partitionName: String, documentId: String, document: MSDictionaryDocument, writeOptions: MSWriteOptions, completionHandler: @escaping (_ document:MSDocumentWrapper) -> Void) {
-    MSData.replace(withDocumentID: documentId, document: document, partition: partitionName, writeOptions: writeOptions, completionHandler: completionHandler)
-  }
-  
-  func deleteDocumentWithPartition(_ partitionName: String, documentId: String) {
-    MSData.delete(withDocumentID: documentId, partition: partitionName, completionHandler: { document in
-      print("Data.delete document with id \(documentId) succeeded")
-    })
-  }
-    
-  func readDocumentWithPartition(_ partitionName: String, documentId: String, documentType: AnyClass, completionHandler: @escaping (_ document:MSDocumentWrapper) -> Void) {
-    MSData.read(withDocumentID: documentId, documentType: documentType, partition: partitionName, completionHandler: completionHandler)
-  }
-    
-  }
+}

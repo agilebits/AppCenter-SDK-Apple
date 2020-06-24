@@ -24,7 +24,7 @@
 /**
  * Key for device history.
  */
-static NSString *const kMSPastDevicesKey = @"pastDevicesKey";
+static NSString *const kMSPastDevicesKey = @"PastDevices";
 
 @class MSDeviceHistoryInfo;
 
@@ -53,7 +53,7 @@ static NSString *const kMSPastDevicesKey = @"pastDevicesKey";
  */
 - (NSString *)deviceModel;
 
-#if TARGET_OS_OSX
+#if TARGET_OS_OSX || TARGET_OS_MACCATALYST
 /**
  * Get the OS name.
  *

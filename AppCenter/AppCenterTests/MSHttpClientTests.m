@@ -1,18 +1,20 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#import <OHHTTPStubs/NSURLRequest+HTTPBodyTesting.h>
-#import <OHHTTPStubs/OHHTTPStubs.h>
+#import "NSURLRequest+HTTPBodyTesting.h"
+#import "HTTPStubs.h"
 
 #import "AppCenter+Internal.h"
 #import "MSAppCenterErrors.h"
 #import "MSConstants+Internal.h"
 #import "MSDevice.h"
 #import "MSDeviceInternal.h"
+#import "MSHttpCall.h"
 #import "MSHttpClientPrivate.h"
 #import "MSHttpTestUtil.h"
 #import "MSMockLog.h"
 #import "MSTestFrameworks.h"
+#import "MSTestUtil.h"
 #import "MS_Reachability.h"
 
 static NSTimeInterval const kMSTestTimeout = 5.0;
@@ -26,10 +28,7 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
 
 @interface MSHttpClient ()
 
-- (instancetype)initWithMaxHttpConnectionsPerHost:(NSNumber *)maxHttpConnectionsPerHost
-                                   retryIntervals:(NSArray *)retryIntervals
-                                     reachability:(MS_Reachability *)reachability
-                               compressionEnabled:(BOOL)compressionEnabled;
+- (instancetype)initWithMaxHttpConnectionsPerHost:(NSNumber *)maxHttpConnectionsPerHost reachability:(MS_Reachability *)reachability;
 
 @end
 
@@ -48,57 +47,18 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
 }
 
 - (void)tearDown {
-  [super tearDown];
-
   [MSHttpTestUtil removeAllStubs];
   [self.reachabilityMock stopMocking];
+  [super tearDown];
 }
 
-- (void)testInitWithMaxHttpConnectionsPerHostCompressionEnabled {
+- (void)testInitWithMaxHttpConnectionsPerHost {
 
   // When
-  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:2 compressionEnabled:YES];
+  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:2];
 
   // Then
   XCTAssertEqual(httpClient.sessionConfiguration.HTTPMaximumConnectionsPerHost, 2);
-  XCTAssertTrue(httpClient.compressionEnabled);
-}
-
-- (void)testInitWithMaxHttpConnectionsPerHostCompressionDisabled {
-
-  // When
-  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:2 compressionEnabled:NO];
-
-  // Then
-  XCTAssertEqual(httpClient.sessionConfiguration.HTTPMaximumConnectionsPerHost, 2);
-  XCTAssertFalse(httpClient.compressionEnabled);
-}
-
-- (void)testInitEnablesCompressionByDefault {
-
-  // When
-  MSHttpClient *httpClient = [[MSHttpClient alloc] init];
-
-  // Then
-  XCTAssertTrue(httpClient.compressionEnabled);
-}
-
-- (void)testInitWithCompressionEnabled {
-
-  // When
-  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithCompressionEnabled:YES];
-
-  // Then
-  XCTAssertTrue(httpClient.compressionEnabled);
-}
-
-- (void)testInitWithCompressionDisabled {
-
-  // When
-  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithCompressionEnabled:NO];
-
-  // Then
-  XCTAssertFalse(httpClient.compressionEnabled);
 }
 
 - (void)testPostSuccessWithoutHeaders {
@@ -107,14 +67,14 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   __block NSURLRequest *actualRequest;
 
   // Stub HTTP response.
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(NSURLRequest *request) {
         actualRequest = request;
         NSData *responsePayload = [@"OK" dataUsingEncoding:kCFStringEncodingUTF8];
-        return [OHHTTPStubsResponse responseWithData:responsePayload statusCode:MSHTTPCodesNo200OK headers:nil];
+        return [HTTPStubsResponse responseWithData:responsePayload statusCode:MSHTTPCodesNo200OK headers:nil];
       }];
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@"HTTP Response 200"];
   MSHttpClient *httpClient = [MSHttpClient new];
@@ -145,31 +105,58 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   XCTAssertEqualObjects(actualRequest.OHHTTPStubs_HTTPBody, payload);
 }
 
+- (void)testSendAsyncEnablesCompressionByDefaultAndUsesDefaultRetries {
+
+  // If
+  MSHttpClient *httpClient = OCMPartialMock([MSHttpClient new]);
+  NSURL *url = [NSURL URLWithString:@"https://mock/something?a=b"];
+  NSString *method = @"GET";
+  NSArray *defaultRetryIntervals = @[ @10, @(5 * 60), @(20 * 60) ];
+  OCMStub([httpClient sendCallAsync:OCMOCK_ANY]).andDo(nil);
+
+  // When
+  [httpClient sendAsync:url
+                 method:method
+                headers:nil
+                   data:nil
+      completionHandler:^(NSData *_Nullable responseBody __unused, NSHTTPURLResponse *_Nullable response __unused,
+                          NSError *_Nullable error __unused){
+      }];
+
+  // Then
+  OCMVerify([httpClient sendAsync:url
+                           method:method
+                          headers:nil
+                             data:nil
+                   retryIntervals:defaultRetryIntervals
+               compressionEnabled:YES
+                completionHandler:OCMOCK_ANY]);
+}
+
 - (void)testGetWithHeadersResultInFatalNSError {
 
   // If
   __block NSURLRequest *actualRequest;
 
   // Stub HTTP response.
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(NSURLRequest *request) {
         actualRequest = request;
         NSError *error = [NSError errorWithDomain:NSURLErrorDomain code:kCFURLErrorBadURL userInfo:nil];
-        return [OHHTTPStubsResponse responseWithError:error];
+        return [HTTPStubsResponse responseWithError:error];
       }];
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@"Network error"];
   MSHttpClient *httpClient = [MSHttpClient new];
   NSURL *url = [NSURL URLWithString:@"https://mock/something?a=b"];
   NSString *method = @"GET";
-  NSDictionary *headers = @{@"Authorization" : @"something"};
 
   // When
   [httpClient sendAsync:url
                  method:method
-                headers:headers
+                headers:nil
                    data:nil
       completionHandler:^(NSData *responseBody, NSHTTPURLResponse *response, NSError *error) {
         // Then
@@ -188,7 +175,6 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   // Then
   XCTAssertEqualObjects(actualRequest.URL, url);
   XCTAssertEqualObjects(actualRequest.HTTPMethod, method);
-  XCTAssertEqualObjects(actualRequest.allHTTPHeaderFields[@"Authorization"], @"something");
 }
 
 - (void)testDeleteUnrecoverableErrorWithoutHeadersNotRetried {
@@ -196,14 +182,14 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   // If
   __block int numRequests = 0;
   __block NSURLRequest *actualRequest;
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(NSURLRequest *request) {
         ++numRequests;
         actualRequest = request;
-        return [OHHTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo400BadRequest headers:nil];
+        return [HTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo400BadRequest headers:nil];
       }];
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@""];
   MSHttpClient *httpClient = [MSHttpClient new];
@@ -252,11 +238,11 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   __block NSURLRequest *actualRequest;
   dispatch_semaphore_t networkDownSemaphore = dispatch_semaphore_create(0);
   NSArray *retryIntervals = @[ @1, @2 ];
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(NSURLRequest *request) {
         actualRequest = request;
         if (firstTime) {
           firstTime = NO;
@@ -267,31 +253,30 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
 
           // Network is down so it is now okay for the test to bring the network back.
           dispatch_semaphore_signal(networkDownSemaphore);
-          return [OHHTTPStubsResponse responseWithError:error];
+          return [HTTPStubsResponse responseWithError:error];
         }
-        return [OHHTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
+        return [HTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
       }];
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@""];
-  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil
-                                                                      retryIntervals:retryIntervals
-                                                                        reachability:self.reachabilityMock
-                                                                  compressionEnabled:YES];
+  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil reachability:self.reachabilityMock];
   NSURL *url = [NSURL URLWithString:@"https://mock/something?a=b"];
   NSString *method = @"DELETE";
 
   // When
   [httpClient sendAsync:url
-                 method:method
-                headers:nil
-                   data:nil
-      completionHandler:^(__unused NSData *responseBody, __unused NSHTTPURLResponse *response, __unused NSError *error) {
-        completionHandlerCalled = YES;
-        XCTAssertNotNil(responseBody);
-        XCTAssertNotNil(response);
-        XCTAssertEqual(response.statusCode, MSHTTPCodesNo204NoContent);
-        XCTAssertNil(error);
-        [expectation fulfill];
-      }];
+                  method:method
+                 headers:nil
+                    data:nil
+          retryIntervals:retryIntervals
+      compressionEnabled:YES
+       completionHandler:^(__unused NSData *responseBody, __unused NSHTTPURLResponse *response, __unused NSError *error) {
+         completionHandlerCalled = YES;
+         XCTAssertNotNil(responseBody);
+         XCTAssertNotNil(response);
+         XCTAssertEqual(response.statusCode, MSHTTPCodesNo204NoContent);
+         XCTAssertNil(error);
+         [expectation fulfill];
+       }];
 
   // Wait a little to ensure that the completion handler is not invoked yet.
   sleep(1);
@@ -324,15 +309,12 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   __block NSURLRequest *actualRequest;
   dispatch_semaphore_t networkDownSemaphore = dispatch_semaphore_create(0);
   NSArray *retryIntervals = @[ @5, @2 ];
-  __block MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil
-                                                                              retryIntervals:retryIntervals
-                                                                                reachability:self.reachabilityMock
-                                                                          compressionEnabled:YES];
-  [OHHTTPStubs
+  __block MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil reachability:self.reachabilityMock];
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(NSURLRequest *request) {
         actualRequest = request;
         if (firstTime) {
 
@@ -344,9 +326,9 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
             dispatch_semaphore_signal(networkDownSemaphore);
           });
           firstTime = NO;
-          return [OHHTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo503ServiceUnavailable headers:nil];
+          return [HTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo503ServiceUnavailable headers:nil];
         }
-        return [OHHTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
+        return [HTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
       }];
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@""];
   NSURL *url = [NSURL URLWithString:@"https://mock/something?a=b"];
@@ -354,17 +336,19 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
 
   // When
   [httpClient sendAsync:url
-                 method:method
-                headers:nil
-                   data:nil
-      completionHandler:^(__unused NSData *responseBody, __unused NSHTTPURLResponse *response, __unused NSError *error) {
-        completionHandlerCalled = YES;
-        XCTAssertNotNil(responseBody);
-        XCTAssertNotNil(response);
-        XCTAssertEqual(response.statusCode, MSHTTPCodesNo204NoContent);
-        XCTAssertNil(error);
-        [expectation fulfill];
-      }];
+                  method:method
+                 headers:nil
+                    data:nil
+          retryIntervals:retryIntervals
+      compressionEnabled:YES
+       completionHandler:^(__unused NSData *responseBody, __unused NSHTTPURLResponse *response, __unused NSError *error) {
+         completionHandlerCalled = YES;
+         XCTAssertNotNil(responseBody);
+         XCTAssertNotNil(response);
+         XCTAssertEqual(response.statusCode, MSHTTPCodesNo204NoContent);
+         XCTAssertNil(error);
+         [expectation fulfill];
+       }];
 
   // Wait a little to ensure that the completion handler is not invoked yet.
   sleep(1);
@@ -396,36 +380,35 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   __block NSURLRequest *actualRequest;
   __block BOOL completionHandlerCalled = NO;
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@""];
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(NSURLRequest *request) {
         ++numRequests;
         actualRequest = request;
-        return [OHHTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
+        return [HTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
       }];
-  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil
-                                                                      retryIntervals:@[ @1 ]
-                                                                        reachability:self.reachabilityMock
-                                                                  compressionEnabled:YES];
+  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil reachability:self.reachabilityMock];
   NSURL *url = [NSURL URLWithString:@"https://mock/something?a=b"];
   NSString *method = @"DELETE";
 
   // When
   [self simulateReachabilityChangedNotification:NotReachable];
   [httpClient sendAsync:url
-                 method:method
-                headers:nil
-                   data:nil
-      completionHandler:^(NSData *responseBody, NSHTTPURLResponse *response, NSError *error) {
-        // Then
-        XCTAssertEqual(response.statusCode, MSHTTPCodesNo204NoContent);
-        XCTAssertEqualObjects(responseBody, [NSData data]);
-        XCTAssertNil(error);
-        completionHandlerCalled = YES;
-        [expectation fulfill];
-      }];
+                  method:method
+                 headers:nil
+                    data:nil
+          retryIntervals:@[ @1 ]
+      compressionEnabled:YES
+       completionHandler:^(NSData *responseBody, NSHTTPURLResponse *response, NSError *error) {
+         // Then
+         XCTAssertEqual(response.statusCode, MSHTTPCodesNo204NoContent);
+         XCTAssertEqualObjects(responseBody, [NSData data]);
+         XCTAssertNil(error);
+         completionHandlerCalled = YES;
+         [expectation fulfill];
+       }];
 
   // Wait a while to make sure that the requests are not sent while the network is down.
   sleep(1);
@@ -455,35 +438,34 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   __block int numRequests = 0;
   __block NSURLRequest *actualRequest;
   NSArray *retryIntervals = @[ @1, @2 ];
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(NSURLRequest *request) {
         actualRequest = request;
         ++numRequests;
-        return [OHHTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo500InternalServerError headers:nil];
+        return [HTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo500InternalServerError headers:nil];
       }];
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@""];
-  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil
-                                                                      retryIntervals:retryIntervals
-                                                                        reachability:self.reachabilityMock
-                                                                  compressionEnabled:YES];
+  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil reachability:nil];
   NSURL *url = [NSURL URLWithString:@"https://mock/something?a=b"];
   NSString *method = @"DELETE";
 
   // When
   [httpClient sendAsync:url
-                 method:method
-                headers:nil
-                   data:nil
-      completionHandler:^(NSData *responseBody, NSHTTPURLResponse *response, NSError *error) {
-        // Then
-        XCTAssertEqual(response.statusCode, MSHTTPCodesNo500InternalServerError);
-        XCTAssertNotNil(responseBody);
-        XCTAssertNil(error);
-        [expectation fulfill];
-      }];
+                  method:method
+                 headers:nil
+                    data:nil
+          retryIntervals:retryIntervals
+      compressionEnabled:YES
+       completionHandler:^(NSData *responseBody, NSHTTPURLResponse *response, NSError *error) {
+         // Then
+         XCTAssertEqual(response.statusCode, MSHTTPCodesNo500InternalServerError);
+         XCTAssertNotNil(responseBody);
+         XCTAssertNil(error);
+         [expectation fulfill];
+       }];
 
   [self waitForExpectationsWithTimeout:kMSTestTimeout
                                handler:^(NSError *_Nullable error) {
@@ -506,11 +488,11 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   __block int numRequests = 0;
   dispatch_semaphore_t responseSemaphore = dispatch_semaphore_create(0);
   dispatch_semaphore_t pauseSemaphore = dispatch_semaphore_create(0);
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(__unused NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(__unused NSURLRequest *request) {
         ++numRequests;
 
         // Use this semaphore to prevent the pause from occurring before the call is enqueued.
@@ -518,22 +500,21 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
 
         // Don't let the request finish before pausing.
         dispatch_semaphore_wait(pauseSemaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kMSTestTimeout * NSEC_PER_SEC)));
-        return [OHHTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
+        return [HTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
       }];
-  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil
-                                                                      retryIntervals:@[]
-                                                                        reachability:self.reachabilityMock
-                                                                  compressionEnabled:YES];
+  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil reachability:self.reachabilityMock];
   NSURL *url = [NSURL URLWithString:@"https://mock/something?a=b"];
   NSString *method = @"DELETE";
 
   // When
   [httpClient sendAsync:url
-                 method:method
-                headers:nil
-                   data:nil
-      completionHandler:^(__unused NSData *responseBody, __unused NSHTTPURLResponse *response, __unused NSError *error){
-      }];
+                  method:method
+                 headers:nil
+                    data:nil
+          retryIntervals:@[]
+      compressionEnabled:YES
+       completionHandler:^(__unused NSData *responseBody, __unused NSHTTPURLResponse *response, __unused NSError *error){
+       }];
 
   // Don't pause until the call has been enqueued.
   dispatch_semaphore_wait(responseSemaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kMSTestTimeout * NSEC_PER_SEC)));
@@ -554,40 +535,39 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@""];
   dispatch_semaphore_t responseSemaphore = dispatch_semaphore_create(0);
   dispatch_semaphore_t testCompletedSemaphore = dispatch_semaphore_create(0);
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(__unused NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(__unused NSURLRequest *request) {
         dispatch_semaphore_signal(responseSemaphore);
 
         // Sleep to ensure that the call is really canceled instead of waiting for the response.
         dispatch_semaphore_wait(testCompletedSemaphore, DISPATCH_TIME_FOREVER);
-        return [OHHTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
+        return [HTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
       }];
-  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil
-                                                                      retryIntervals:@[ @1 ]
-                                                                        reachability:self.reachabilityMock
-                                                                  compressionEnabled:YES];
+  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil reachability:nil];
   NSURL *url = [NSURL URLWithString:@"https://mock/something?a=b"];
   NSString *method = @"DELETE";
 
   // When
   [httpClient sendAsync:url
-                 method:method
-                headers:nil
-                   data:nil
-      completionHandler:^(NSData *responseBody, NSHTTPURLResponse *response, NSError *error) {
-        // Then
-        XCTAssertNotNil(error);
-        XCTAssertNil(response);
-        XCTAssertNil(responseBody);
-        [expectation fulfill];
-      }];
+                  method:method
+                 headers:nil
+                    data:nil
+          retryIntervals:@[ @1 ]
+      compressionEnabled:YES
+       completionHandler:^(NSData *responseBody, NSHTTPURLResponse *response, NSError *error) {
+         // Then
+         XCTAssertNotNil(error);
+         XCTAssertNil(response);
+         XCTAssertNil(responseBody);
+         [expectation fulfill];
+       }];
 
   // Don't disable until the call has been enqueued.
   dispatch_semaphore_wait(responseSemaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kMSTestTimeout * NSEC_PER_SEC)));
-  [httpClient setEnabled:NO];
+  [httpClient setEnabled:NO andDeleteDataOnDisabled:YES];
 
   // Then
   [self waitForExpectationsWithTimeout:kMSTestTimeout
@@ -607,14 +587,14 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   __block NSURLRequest *actualRequest;
 
   // Stub HTTP response.
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(NSURLRequest *request) {
         actualRequest = request;
         NSData *responsePayload = [@"OK" dataUsingEncoding:kCFStringEncodingUTF8];
-        return [OHHTTPStubsResponse responseWithData:responsePayload statusCode:MSHTTPCodesNo200OK headers:nil];
+        return [HTTPStubsResponse responseWithData:responsePayload statusCode:MSHTTPCodesNo200OK headers:nil];
       }];
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@"HTTP Response 200"];
   MSHttpClient *httpClient = [MSHttpClient new];
@@ -655,65 +635,62 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   __block int numRequests = 0;
   __block NSURLRequest *actualRequest;
   NSArray *retryIntervals = @[ @1000000000, @100000000 ];
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(NSURLRequest *request) {
         actualRequest = request;
         ++numRequests;
         if (numRequests < 3) {
-          return [OHHTTPStubsResponse responseWithData:[NSData data]
-                                            statusCode:MSHTTPCodesNo429TooManyRequests
-                                               headers:@{@"x-ms-retry-after-ms" : @"100"}];
+          return [HTTPStubsResponse responseWithData:[NSData data]
+                                          statusCode:MSHTTPCodesNo429TooManyRequests
+                                             headers:@{@"x-ms-retry-after-ms" : @"100"}];
         }
-        return [OHHTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
+        return [HTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
       }];
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@""];
-  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil
-                                                                      retryIntervals:retryIntervals
-                                                                        reachability:self.reachabilityMock
-                                                                  compressionEnabled:YES];
+  MSHttpClient *httpClient = [[MSHttpClient alloc] initWithMaxHttpConnectionsPerHost:nil reachability:nil];
   NSURL *url = [NSURL URLWithString:@"https://mock/something?a=b"];
   NSString *method = @"DELETE";
 
   // When
   [httpClient sendAsync:url
-                 method:method
-                headers:nil
-                   data:nil
-      completionHandler:^(NSData *responseBody, NSHTTPURLResponse *response, NSError *error) {
-        // Then
-        XCTAssertEqual(response.statusCode, MSHTTPCodesNo204NoContent);
-        XCTAssertNotNil(responseBody);
-        XCTAssertNil(error);
-        [expectation fulfill];
-      }];
+                  method:method
+                 headers:nil
+                    data:nil
+          retryIntervals:retryIntervals
+      compressionEnabled:YES
+       completionHandler:^(NSData *responseBody, NSHTTPURLResponse *response, NSError *error) {
+         // Then
+         XCTAssertEqual(response.statusCode, MSHTTPCodesNo204NoContent);
+         XCTAssertNotNil(responseBody);
+         XCTAssertNil(error);
+         [expectation fulfill];
+       }];
 
   [self waitForExpectationsWithTimeout:kMSTestTimeout
                                handler:^(NSError *_Nullable error) {
+                                 XCTAssertEqualObjects(actualRequest.URL, url);
+                                 XCTAssertEqualObjects(actualRequest.HTTPMethod, method);
+                                 XCTAssertEqual(numRequests, 1 + [retryIntervals count]);
                                  if (error) {
                                    XCTFail(@"Expectation Failed with error: %@", error);
                                  }
                                }];
-
-  // Then
-  XCTAssertEqualObjects(actualRequest.URL, url);
-  XCTAssertEqualObjects(actualRequest.HTTPMethod, method);
-  XCTAssertEqual(numRequests, 1 + [retryIntervals count]);
 }
 
 - (void)testSendAsyncWhileDisabled {
 
   // If
   __block NSURLRequest *actualRequest;
-  [OHHTTPStubs
+  [HTTPStubs
       stubRequestsPassingTest:^BOOL(__unused NSURLRequest *request) {
         return YES;
       }
-      withStubResponse:^OHHTTPStubsResponse *(NSURLRequest *request) {
+      withStubResponse:^HTTPStubsResponse *(NSURLRequest *request) {
         actualRequest = request;
-        return [OHHTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
+        return [HTTPStubsResponse responseWithData:[NSData data] statusCode:MSHTTPCodesNo204NoContent headers:nil];
       }];
   __weak XCTestExpectation *expectation = [self expectationWithDescription:@""];
   MSHttpClient *httpClient = [MSHttpClient new];
@@ -721,7 +698,7 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
   NSString *method = @"GET";
 
   // When
-  [httpClient setEnabled:NO];
+  [httpClient setEnabled:NO andDeleteDataOnDisabled:NO];
   [httpClient sendAsync:url
                  method:method
                 headers:nil
@@ -743,6 +720,100 @@ static NSTimeInterval const kMSTestTimeout = 5.0;
 
   // Then
   XCTAssertNil(actualRequest);
+}
+
+- (void)testPausedWhenAllRetriesUsed {
+
+  // If
+  XCTestExpectation *expectation = [self expectationWithDescription:@"Used all retries."];
+  NSString *containerId = @"1";
+  MSLogContainer *container = OCMPartialMock([MSLogContainer new]);
+  OCMStub([container isValid]).andReturn(YES);
+  OCMStub([container batchId]).andReturn(containerId);
+  MSHttpClient *sut = [MSHttpClient new];
+  NSURL *url = [NSURL URLWithString:@"https://mock/something?a=b"];
+  NSString *method = @"GET";
+
+  // Mock the call to intercept the retry.
+  NSArray *intervals = @[ @(0.5), @(1) ];
+
+  // Respond with a retryable error.
+  [MSHttpTestUtil stubHttp500Response];
+
+  // Send the call.
+  [sut sendAsync:url
+                  method:method
+                 headers:nil
+                    data:nil
+          retryIntervals:intervals
+      compressionEnabled:YES
+       completionHandler:^(NSData *_Nullable responseBody __unused, NSHTTPURLResponse *_Nullable response __unused,
+                           NSError *_Nullable error __unused) {
+         [expectation fulfill];
+       }];
+  [self waitForExpectationsWithTimeout:kMSTestTimeout
+                               handler:^(NSError *error) {
+                                 XCTAssertTrue(sut.paused);
+                                 XCTAssertTrue([sut.pendingCalls count] == 0);
+                                 if (error) {
+                                   XCTFail(@"Expectation Failed with error: %@", error);
+                                 }
+                               }];
+}
+
+- (void)testRetryStoppedWhilePaused {
+
+  // If
+  XCTestExpectation *responseReceivedExpectation = [self expectationWithDescription:@"Request completed."];
+  MSDevice *device = OCMPartialMock([MSDevice new]);
+  OCMStub([device isValid]).andReturn(YES);
+  MSHttpClient *httpClient = [MSHttpClient new];
+
+  // Mock the call to intercept the retry.
+  NSArray *intervals = @[ @(UINT_MAX), @(UINT_MAX) ];
+  MSHttpCall *httpCall =
+      [[MSHttpCall alloc] initWithUrl:[[NSURL alloc] initWithString:@""]
+                               method:@"GET"
+                              headers:nil
+                                 data:nil
+                       retryIntervals:intervals
+                   compressionEnabled:YES
+                    completionHandler:^(NSData *_Nullable responseBody __unused, NSHTTPURLResponse *_Nullable response __unused,
+                                        NSError *_Nullable error __unused){
+                    }];
+
+  // A non-zero number that should be reset by the end.
+  httpCall.retryCount = 1;
+  id mockHttpClient = OCMPartialMock(httpClient);
+  [httpClient.pendingCalls addObject:httpCall];
+
+  OCMStub([mockHttpClient requestCompletedWithHttpCall:httpCall data:OCMOCK_ANY response:OCMOCK_ANY error:OCMOCK_ANY])
+      .andForwardToRealObject()
+      .andDo(^(NSInvocation *invocation __unused) {
+        [responseReceivedExpectation fulfill];
+      });
+
+  // Respond with a retryable error.
+  [MSHttpTestUtil stubHttp500Response];
+
+  // Send the call.
+  [httpClient sendCallAsync:httpCall];
+  [self waitForExpectationsWithTimeout:5
+                               handler:^(NSError *error) {
+                                 // When
+                                 // Pause now that the call is retrying.
+                                 [httpClient pause];
+
+                                 // Then
+                                 // Retry must be stopped.
+                                 if (@available(macOS 10.10, tvOS 9.0, watchOS 2.0, *)) {
+                                   XCTAssertNotEqual(0, dispatch_testcancel(httpCall.timerSource));
+                                 }
+                                 XCTAssertEqual(httpCall.retryCount, 0);
+                                 if (error) {
+                                   XCTFail(@"Expectation Failed with error: %@", error);
+                                 }
+                               }];
 }
 
 - (void)simulateReachabilityChangedNotification:(NetworkStatus)status {

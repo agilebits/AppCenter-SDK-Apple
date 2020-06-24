@@ -1,11 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Workspace
    version = "1.0">
+   <FileRef
+      location = "group:appcenter-post-clone.sh">
+   </FileRef>
+   <FileRef
+      location = "group:AppCenter.podspec">
+   </FileRef>
+   <FileRef
+      location = "group:CHANGELOG.md">
+   </FileRef>
+   <FileRef
+      location = "group:codecov.yml">
+   </FileRef>
+   <FileRef
+      location = "group:LICENSE">
+   </FileRef>
+   <FileRef
+      location = "group:Package.swift">
+   </FileRef>
+   <FileRef
+      location = "group:README.md">
+   </FileRef>
+   <FileRef
+      location = "group:ThirdPartyNotices.txt">
+   </FileRef>
    <Group
       location = "group:Config"
       name = "Config">
       <FileRef
          location = "group:App.xcconfig">
+      </FileRef>
+      <FileRef
+         location = "group:Framework.xcconfig">
       </FileRef>
       <FileRef
          location = "group:Global Debug.xcconfig">
@@ -40,28 +67,10 @@
       <FileRef
          location = "group:Version.xcconfig">
       </FileRef>
+      <FileRef
+         location = "group:watchOS.xcconfig">
+      </FileRef>
    </Group>
-   <FileRef
-      location = "group:AppCenter.podspec">
-   </FileRef>
-   <FileRef
-      location = "group:appcenter-post-clone.sh">
-   </FileRef>
-   <FileRef
-      location = "group:CHANGELOG.md">
-   </FileRef>
-   <FileRef
-      location = "group:codecov.yml">
-   </FileRef>
-   <FileRef
-      location = "group:LICENSE">
-   </FileRef>
-   <FileRef
-      location = "group:README.md">
-   </FileRef>
-   <FileRef
-      location = "group:ThirdPartyNotices.txt">
-   </FileRef>
    <Group
       location = "group:Scripts"
       name = "Scripts">
@@ -75,111 +84,16 @@
          location = "group:build-macos-framework.sh">
       </FileRef>
       <FileRef
+         location = "group:build-maccatalyst-framework.sh">
+      </FileRef>
+      <FileRef
          location = "group:build-tvos-framework.sh">
       </FileRef>
       <FileRef
+         location = "group:build-xcframework.sh">
+      </FileRef>
+      <FileRef
          location = "group:VerifyNoBuildSettings.swift">
-      </FileRef>
-      <Group
-         location = "group:AppCenter"
-         name = "AppCenter">
-         <FileRef
-            location = "group:build-appcenter-ios-framework.sh">
-         </FileRef>
-         <FileRef
-            location = "group:build-appcenter-macos-framework.sh">
-         </FileRef>
-         <FileRef
-            location = "group:build-appcenter-tvos-framework.sh">
-         </FileRef>
-      </Group>
-      <Group
-         location = "group:AppCenterAnalytics"
-         name = "AppCenterAnalytics">
-         <FileRef
-            location = "group:build-appcenteranalytics-ios-framework.sh">
-         </FileRef>
-         <FileRef
-            location = "group:build-appcenteranalytics-macos-framework.sh">
-         </FileRef>
-         <FileRef
-            location = "group:build-appcenteranalytics-tvos-framework.sh">
-         </FileRef>
-      </Group>
-      <Group
-         location = "group:AppCenterAuth"
-         name = "AppCenterAuth">
-         <FileRef
-            location = "group:build-appcenterauth-ios-framework.sh">
-         </FileRef>
-         <FileRef
-            location = "group:build-appcenterauth-macos-framework.sh">
-         </FileRef>
-      </Group>
-      <Group
-         location = "group:AppCenterCrashes"
-         name = "AppCenterCrashes">
-         <FileRef
-            location = "group:build-appcentercrashes-ios-framework.sh">
-         </FileRef>
-         <FileRef
-            location = "group:build-appcentercrashes-macos-framework.sh">
-         </FileRef>
-         <FileRef
-            location = "group:build-appcentercrashes-tvos-framework.sh">
-         </FileRef>
-      </Group>
-      <Group
-         location = "group:AppCenterData"
-         name = "AppCenterData">
-         <FileRef
-            location = "group:build-appcenterdata-ios-framework.sh">
-         </FileRef>
-         <FileRef
-            location = "group:build-appcenterdata-macos-framework.sh">
-         </FileRef>
-      </Group>
-      <Group
-         location = "group:AppCenterDistribute"
-         name = "AppCenterDistribute">
-         <FileRef
-            location = "group:build-appcenterdistribute-ios-framework.sh">
-         </FileRef>
-      </Group>
-      <Group
-         location = "group:AppCenterPush"
-         name = "AppCenterPush">
-         <FileRef
-            location = "group:build-appcenterpush-ios-framework.sh">
-         </FileRef>
-         <FileRef
-            location = "group:build-appcenterpush-macos-framework.sh">
-         </FileRef>
-      </Group>
-   </Group>
-   <Group
-      location = "group:vsts"
-      name = "vsts">
-      <FileRef
-         location = "group:appcenter-build.sh">
-      </FileRef>
-      <FileRef
-         location = "group:zip.sh">
-      </FileRef>
-      <FileRef
-         location = "group:publish-podspec.sh">
-      </FileRef>
-      <FileRef
-         location = "group:commit-validation.sh">
-      </FileRef>
-      <FileRef
-         location = "group:post-release-version-bump.sh">
-      </FileRef>
-      <FileRef
-         location = "group:publish.sh">
-      </FileRef>
-      <FileRef
-         location = "group:internal-version-increment.sh">
       </FileRef>
    </Group>
    <FileRef
@@ -189,13 +103,7 @@
       location = "group:AppCenterAnalytics/AppCenterAnalytics.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:AppCenterAuth/AppCenterAuth.xcodeproj">
-   </FileRef>
-   <FileRef
       location = "group:AppCenterCrashes/AppCenterCrashes.xcodeproj">
-   </FileRef>
-   <FileRef
-      location = "group:AppCenterData/AppCenterData.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:AppCenterDistribute/AppCenterDistribute.xcodeproj">

@@ -9,11 +9,11 @@
 #if GCC_PREPROCESSOR_MACRO_PUPPET
 #import "AppCenter.h"
 #import "AppCenterAnalytics.h"
-#import "AppCenterAuth.h"
 #import "AppCenterCrashes.h"
-#import "AppCenterData.h"
+#if !TARGET_OS_MACCATALYST
 #import "AppCenterDistribute.h"
 #import "AppCenterPush.h"
+#endif
 
 // Internal ones
 #import "MSAnalyticsInternal.h"
@@ -21,18 +21,14 @@
 #elif GCC_PREPROCESSOR_MACRO_SASQUATCH_OBJC
 #import <AppCenter/AppCenter.h>
 #import <AppCenterAnalytics/AppCenterAnalytics.h>
-#import <AppCenterAuth/AppCenterAuth.h>
 #import <AppCenterCrashes/AppCenterCrashes.h>
-#import <AppCenterData/AppCenterData.h>
 #import <AppCenterDistribute/AppCenterDistribute.h>
 #import <AppCenterPush/AppCenterPush.h>
 #else
 @import AppCenter;
 @import AppCenterAnalytics;
 @import AppCenterCrashes;
-@import AppCenterData;
 @import AppCenterDistribute;
-@import AppCenterAuth;
 @import AppCenterPush;
 #endif
 
@@ -46,8 +42,10 @@ enum StartupMode { APPCENTER, ONECOLLECTOR, BOTH, NONE, SKIP };
 #if GCC_PREPROCESSOR_MACRO_PUPPET
     MSAnalyticsDelegate,
 #endif
-    MSCrashesDelegate, MSDistributeDelegate, MSPushDelegate, MSRemoteOperationDelegate, UNUserNotificationCenterDelegate,
-    CLLocationManagerDelegate>
+#if !TARGET_OS_MACCATALYST
+    MSDistributeDelegate, MSPushDelegate,
+#endif
+    MSCrashesDelegate, UNUserNotificationCenterDelegate, CLLocationManagerDelegate>
 
 @property(nonatomic) MSAnalyticsResult *analyticsResult;
 @property(nonatomic) API_AVAILABLE(ios(10.0)) void (^notificationPresentationCompletionHandler)(UNNotificationPresentationOptions options);
@@ -73,10 +71,10 @@ enum StartupMode { APPCENTER, ONECOLLECTOR, BOTH, NONE, SKIP };
   if (startTarget == APPCENTER || startTarget == BOTH) {
     [MSAppCenter setLogUrl:kMSIntLogUrl];
   }
-  [MSAuth setConfigUrl:kMSIntConfigUrl];
-  [MSData setTokenExchangeUrl:kMSIntTokenExchangeUrl];
+#if !TARGET_OS_MACCATALYST
   [MSDistribute setApiUrl:kMSIntApiUrl];
   [MSDistribute setInstallUrl:kMSIntInstallUrl];
+#endif
 #endif
 
 // Customize App Center SDK.
@@ -86,10 +84,10 @@ enum StartupMode { APPCENTER, ONECOLLECTOR, BOTH, NONE, SKIP };
     center.delegate = self;
   }
 #pragma clang diagnostic pop
+#if !TARGET_OS_MACCATALYST
   [MSPush setDelegate:self];
   [MSDistribute setDelegate:self];
-  [MSData setRemoteOperationDelegate:self];
-
+#endif
   // Set max storage size.
   NSNumber *storageMaxSize = [[NSUserDefaults standardUserDefaults] objectForKey:kMSStorageMaxSizeKey];
   if (storageMaxSize) {
@@ -125,9 +123,22 @@ enum StartupMode { APPCENTER, ONECOLLECTOR, BOTH, NONE, SKIP };
   if (latencyTimeValue) {
     [MSAnalytics setTransmissionInterval:latencyTimeValue];
   }
+#if !TARGET_OS_MACCATALYST
+  int updateTrack = [[[NSUserDefaults standardUserDefaults] objectForKey:kMSUpdateTrackKey] intValue];
+  if (updateTrack) {
+    MSDistribute.updateTrack = updateTrack;
+  }
+  if ([[[NSUserDefaults standardUserDefaults] objectForKey:kSASAutomaticCheckForUpdateDisabledKey] isEqual:@1]) {
+    [MSDistribute disableAutomaticCheckForUpdate];
+  }
+#endif
+  
   // Start App Center SDK.
-  NSArray<Class> *services =
-      @ [[MSAnalytics class], [MSCrashes class], [MSData class], [MSDistribute class], [MSAuth class], [MSPush class]];
+#if !TARGET_OS_MACCATALYST
+  NSArray<Class> *services = @ [[MSAnalytics class], [MSCrashes class], [MSDistribute class], [MSPush class]];
+#else
+  NSArray<Class> *services = @ [[MSAnalytics class], [MSCrashes class]];
+#endif
 #if GCC_PREPROCESSOR_MACRO_PUPPET
   NSString *appSecret = [[NSUserDefaults standardUserDefaults] objectForKey:kMSAppSecret] ?: kMSPuppetAppSecret;
 #else
@@ -243,8 +254,12 @@ enum StartupMode { APPCENTER, ONECOLLECTOR, BOTH, NONE, SKIP };
 - (void)setAppCenterDelegate {
   AppCenterDelegateObjC *appCenterDel = [[AppCenterDelegateObjC alloc] init];
   for (UIViewController *controller in [(UITabBarController *)self.window.rootViewController viewControllers]) {
-    id<AppCenterProtocol> sasquatchController = (id<AppCenterProtocol>)controller;
-    sasquatchController.appCenter = appCenterDel;
+    if ([controller conformsToProtocol:@protocol(AppCenterProtocol)]) {
+      id<AppCenterProtocol> sasquatchController = (id<AppCenterProtocol>)controller;
+      sasquatchController.appCenter = appCenterDel;
+    } else {
+      [controller removeFromParentViewController];
+    }
   }
 }
 
@@ -266,22 +281,6 @@ enum StartupMode { APPCENTER, ONECOLLECTOR, BOTH, NONE, SKIP };
   [NSNotificationCenter.defaultCenter postNotificationName:kUpdateAnalyticsResultNotification object:self.analyticsResult];
 }
 #endif
-
-#pragma mark - MSRemoteOperationDelegate
-
-- (void)data:(MSData *)data
-    didCompleteRemoteOperation:(NSString *)operation
-           forDocumentMetadata:(MSDocumentMetadata *_Nullable)documentMetadata
-                     withError:(MSDataError *_Nullable)error {
-  NSLog(@"Operation processed: %@ ", operation);
-  if (documentMetadata) {
-    NSLog(@"Document: Partition : %@, document id : %@, eTag : %@ ", documentMetadata.partition, documentMetadata.documentId,
-          documentMetadata.eTag);
-  }
-  if (error) {
-    NSLog(@"Error: %@ ", error);
-  }
-}
 
 #pragma mark - MSCrashesDelegate
 
@@ -315,6 +314,7 @@ enum StartupMode { APPCENTER, ONECOLLECTOR, BOTH, NONE, SKIP };
   // Binary attachment.
   NSURL *referenceUrl = [[NSUserDefaults standardUserDefaults] URLForKey:@"fileAttachment"];
   if (referenceUrl) {
+#if !TARGET_OS_MACCATALYST
     PHAsset *asset = [[PHAsset fetchAssetsWithALAssetURLs:@[ referenceUrl ] options:nil] lastObject];
     if (asset) {
       PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
@@ -335,15 +335,34 @@ enum StartupMode { APPCENTER, ONECOLLECTOR, BOTH, NONE, SKIP };
                        NSLog(@"Add binary attachment with %tu bytes", [imageData length]);
                      }];
     }
+#else
+    NSError *error;
+    NSData *data = [NSData dataWithContentsOfURL:referenceUrl options:0 error:&error];
+    if (data && !error) {
+      CFStringRef UTI =
+          UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)[referenceUrl pathExtension], nil);
+      NSString *MIMEType = (__bridge_transfer NSString *)UTTypeCopyPreferredTagWithClass(UTI, kUTTagClassMIMEType);
+      CFRelease(UTI);
+      MSErrorAttachmentLog *binaryAttachment = [MSErrorAttachmentLog attachmentWithBinary:data
+                                                                                 filename:referenceUrl.lastPathComponent
+                                                                              contentType:MIMEType];
+      [attachments addObject:binaryAttachment];
+      NSLog(@"Add binary attachment with %tu bytes", [data length]);
+    } else {
+      NSLog(@"Couldn't read attachment file with error: %@", error.localizedDescription);
+    }
+#endif
   }
   return attachments;
 }
 
 #pragma mark - MSDistributeDelegate
 
+#if !TARGET_OS_MACCATALYST
+
 - (BOOL)distribute:(MSDistribute *)distribute releaseAvailableWithDetails:(MSReleaseDetails *)details {
 
-  if ([[[NSUserDefaults new] objectForKey:kSASCustomizedUpdateAlertKey] isEqual:@1]) {
+  if ([[[NSUserDefaults standardUserDefaults] objectForKey:kSASCustomizedUpdateAlertKey] isEqual:@1]) {
 
     // Show a dialog to the user where they can choose if they want to update.
     UIAlertController *alertController =
@@ -371,7 +390,6 @@ enum StartupMode { APPCENTER, ONECOLLECTOR, BOTH, NONE, SKIP };
   }
   return NO;
 }
-
 #pragma mark - Push callbacks
 
 // iOS 10 and later, called when a notification is delivered to an app that is in the foreground.
@@ -439,6 +457,7 @@ enum StartupMode { APPCENTER, ONECOLLECTOR, BOTH, NONE, SKIP };
     self.notificationPresentationCompletionHandler = nil;
   }
 }
+#endif
 
 #pragma mark - CLLocationManagerDelegate
 

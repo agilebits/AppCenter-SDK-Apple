@@ -7,11 +7,12 @@
 #import "MSAppCenterInternal.h"
 #import "MSAppCenterPrivate.h"
 #import "MSAppDelegateForwarder.h"
-#import "MSAuthTokenContext.h"
 #import "MSChannelGroupDefault.h"
 #import "MSChannelGroupDefaultPrivate.h"
 #import "MSChannelUnitConfiguration.h"
+#import "MSDependencyConfiguration.h"
 #import "MSDeviceTrackerPrivate.h"
+#import "MSHttpClient.h"
 #import "MSLoggerInternal.h"
 #import "MSOneCollectorChannelDelegate.h"
 #import "MSSessionContext.h"
@@ -240,6 +241,30 @@ static const long kMSMinUpperSizeLimitInBytes = 24 * 1024;
   if ((self = [super init])) {
     _services = [NSMutableArray new];
     _enabledStateUpdating = NO;
+    NSDictionary *changedKeys = @{
+      @"MSAppCenterChannelStartTimer" : MSPrefixKeyFrom(@"MSChannelStartTimer"),
+      // [MSChannelUnitDefault oldestPendingLogTimestampKey]
+      @"MSAppCenterPastDevices" : @"pastDevicesKey",
+      // [MSDeviceTracker init],
+      // [MSDeviceTracker device],
+      // [MSDeviceTracker clearDevices]
+      @"MSAppCenterInstallId" : @"MSInstallId",
+      // [MSAppCenter installId]
+      @"MSAppCenterAppCenterIsEnabled" : @"MSAppCenterIsEnabled",
+      // [MSAppCenter isEnabled]
+      @"MSAppCenterEncryptionKeyMetadata" : @"MSEncryptionKeyMetadata",
+      // [MSEncrypter getCurrentKeyTag],
+      // [MSEncrypter rotateToNewKeyTag]
+      @"MSAppCenterSessionIdHistory" : @"SessionIdHistory",
+      // [MSSessionContext init],
+      // [MSSessionContext setSessionId],
+      // [MSSessionContext clearSessionHistoryAndKeepCurrentSession]
+      @"MSAppCenterUserIdHistory" : @"UserIdHistory"
+      // [MSUserIdContext init],
+      // [MSUserIdContext setUserId],
+      // [MSUserIdContext clearUserIdHistory]
+    };
+    [MS_APP_CENTER_USER_DEFAULTS migrateKeys:changedKeys forService:kMSServiceName];
   }
   return self;
 }
@@ -325,9 +350,6 @@ static const long kMSMinUpperSizeLimitInBytes = 24 * 1024;
       [servicesNames addObject:[service serviceName]];
     }
   }
-
-  // Finish auth token context initialization.
-  [[MSAuthTokenContext sharedInstance] finishInitialize];
   if ([servicesNames count] > 0) {
     if (fromApplication) {
       [self sendStartServiceLog:servicesNames];
@@ -528,7 +550,7 @@ static const long kMSMinUpperSizeLimitInBytes = 24 * 1024;
     if ([self isEnabled] != isEnabled) {
 
       // Persist the enabled status.
-      [MS_USER_DEFAULTS setObject:@(isEnabled) forKey:kMSAppCenterIsEnabledKey];
+      [MS_APP_CENTER_USER_DEFAULTS setObject:@(isEnabled) forKey:kMSAppCenterIsEnabledKey];
 
       // Enable/disable pipeline.
       [self applyPipelineEnabledState:isEnabled];
@@ -549,7 +571,7 @@ static const long kMSMinUpperSizeLimitInBytes = 24 * 1024;
    * Get isEnabled value from persistence.
    * No need to cache the value in a property, user settings already have their cache mechanism.
    */
-  NSNumber *isEnabledNumber = [MS_USER_DEFAULTS objectForKey:kMSAppCenterIsEnabledKey];
+  NSNumber *isEnabledNumber = [MS_APP_CENTER_USER_DEFAULTS objectForKey:kMSAppCenterIsEnabledKey];
 
   // Return the persisted value otherwise it's enabled by default.
   return (isEnabledNumber) ? [isEnabledNumber boolValue] : YES;
@@ -598,11 +620,18 @@ static const long kMSMinUpperSizeLimitInBytes = 24 * 1024;
 
     // Construct channel group.
     if (!self.oneCollectorChannelDelegate) {
-      self.oneCollectorChannelDelegate = [[MSOneCollectorChannelDelegate alloc] initWithInstallId:self.installId
-                                                                                          baseUrl:self.appSecret ? nil : self.logUrl];
+      self.oneCollectorChannelDelegate = [[MSOneCollectorChannelDelegate alloc] initWithHttpClient:[MSHttpClient new]
+                                                                                         installId:self.installId
+                                                                                           baseUrl:self.appSecret ? nil : self.logUrl];
     }
     if (!self.channelGroup) {
-      self.channelGroup = [[MSChannelGroupDefault alloc] initWithInstallId:self.installId logUrl:self.logUrl ?: kMSAppCenterBaseUrl];
+      id<MSHttpClientProtocol> httpClient = [MSDependencyConfiguration httpClient];
+      if (!httpClient) {
+        httpClient = [MSHttpClient new];
+      }
+      self.channelGroup = [[MSChannelGroupDefault alloc] initWithHttpClient:httpClient
+                                                                  installId:self.installId
+                                                                     logUrl:self.logUrl ?: kMSAppCenterBaseUrl];
       [self.channelGroup addDelegate:self.oneCollectorChannelDelegate];
       if (self.requestedMaxStorageSizeInBytes) {
         long storageSize = [self.requestedMaxStorageSizeInBytes longValue];
@@ -628,7 +657,7 @@ static const long kMSMinUpperSizeLimitInBytes = 24 * 1024;
     if (!_installId) {
 
       // Check if install Id has already been persisted.
-      NSString *savedInstallId = [MS_USER_DEFAULTS objectForKey:kMSInstallIdKey];
+      NSString *savedInstallId = [MS_APP_CENTER_USER_DEFAULTS objectForKey:kMSInstallIdKey];
       if (savedInstallId) {
         _installId = MS_UUID_FROM_STRING(savedInstallId);
       }
@@ -638,7 +667,7 @@ static const long kMSMinUpperSizeLimitInBytes = 24 * 1024;
         _installId = [NSUUID UUID];
 
         // Persist the install Id string.
-        [MS_USER_DEFAULTS setObject:[_installId UUIDString] forKey:kMSInstallIdKey];
+        [MS_APP_CENTER_USER_DEFAULTS setObject:[_installId UUIDString] forKey:kMSInstallIdKey];
       }
     }
     return _installId;

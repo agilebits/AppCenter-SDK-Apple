@@ -8,8 +8,7 @@
 #import "MSAppCenter.h"
 #import "MSAppCenterInternal.h"
 #import "MSAppCenterPrivate.h"
-#import "MSAuthTokenContext.h"
-#import "MSAuthTokenContextPrivate.h"
+#import "MSAppCenterUserDefaultsPrivate.h"
 #import "MSBooleanTypedProperty.h"
 #import "MSChannelGroupDefault.h"
 #import "MSChannelUnitConfiguration.h"
@@ -71,7 +70,6 @@ static NSString *const kMSAnalyticsServiceName = @"Analytics";
 - (void)setUp {
   [super setUp];
   [MSAppCenter resetSharedInstance];
-  [MSAuthTokenContext resetSharedInstance];
 
   // Mock NSUserDefaults.
   self.settingsMock = [MSMockUserDefaults new];
@@ -87,7 +85,7 @@ static NSString *const kMSAnalyticsServiceName = @"Analytics";
   self.channelUnitCriticalMock = OCMProtocolMock(@protocol(MSChannelUnitProtocol));
   [MSAnalytics sharedInstance].criticalChannelUnit = self.channelUnitCriticalMock;
   OCMStub([self.channelGroupMock alloc]).andReturn(self.channelGroupMock);
-  OCMStub([self.channelGroupMock initWithInstallId:OCMOCK_ANY logUrl:OCMOCK_ANY]).andReturn(self.channelGroupMock);
+  OCMStub([self.channelGroupMock initWithHttpClient:OCMOCK_ANY installId:OCMOCK_ANY logUrl:OCMOCK_ANY]).andReturn(self.channelGroupMock);
   OCMStub([self.channelGroupMock addChannelUnitWithConfiguration:hasProperty(@"groupId", endsWith(kMSCriticalChannelSuffix))])
       .andReturn(self.channelUnitCriticalMock);
   OCMStub([self.channelGroupMock addChannelUnitWithConfiguration:hasProperty(@"groupId", equalTo(kMSAnalyticsGroupId))])
@@ -95,20 +93,19 @@ static NSString *const kMSAnalyticsServiceName = @"Analytics";
 }
 
 - (void)tearDown {
-  [super tearDown];
+  [MSSessionContext resetSharedInstance];
+  [MSAnalytics resetSharedInstance];
   [self.settingsMock stopMocking];
   [self.sessionContextMock stopMocking];
-  [MSSessionContext resetSharedInstance];
-
-// Make sure sessionTracker removes all observers.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wnonnull"
-  [MSAnalytics sharedInstance].sessionTracker = nil;
-#pragma clang diagnostic pop
-  [MSAnalytics resetSharedInstance];
+  [super tearDown];
 }
 
 #pragma mark - Tests
+
+- (void)testMigrateOnInit {
+  NSString *key = [NSString stringWithFormat:kMSMockMigrationKey, @"Analytics"];
+  XCTAssertNotNil([self.settingsMock objectForKey:key]);
+}
 
 - (void)testValidateEventName {
   const int maxEventNameLength = 256;
@@ -765,8 +762,11 @@ static NSString *const kMSAnalyticsServiceName = @"Analytics";
   // Then
   XCTAssertEqual(actualType, kMSTypeEvent);
   XCTAssertEqual(actualName, expectedName);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   XCTAssertEqual(actualFlags, MSFlagsPersistenceCritical);
   OCMVerifyAll(self.channelUnitMock);
+#pragma clang diagnostic pop
 }
 
 - (void)testTrackEventWithPropertiesWithInvalidFlag {
@@ -811,6 +811,8 @@ static NSString *const kMSAnalyticsServiceName = @"Analytics";
                                             appSecret:kMSTestAppSecret
                               transmissionTargetToken:nil
                                       fromApplication:YES];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   OCMExpect([self.channelUnitCriticalMock enqueueItem:OCMOCK_ANY flags:MSFlagsPersistenceCritical]);
   OCMExpect([self.channelUnitMock enqueueItem:OCMOCK_ANY flags:MSFlagsPersistenceNormal]);
 
@@ -820,6 +822,7 @@ static NSString *const kMSAnalyticsServiceName = @"Analytics";
                      forTransmissionTarget:nil
                                      flags:MSFlagsPersistenceCritical];
   [[MSAnalytics sharedInstance] trackEvent:expectedEvent withTypedProperties:nil forTransmissionTarget:nil flags:MSFlagsPersistenceNormal];
+#pragma clang diagnostic pop
 
   // Then
   OCMVerifyAll(self.channelUnitCriticalMock);
@@ -888,7 +891,10 @@ static NSString *const kMSAnalyticsServiceName = @"Analytics";
   // Then
   XCTAssertEqual(actualType, kMSTypeEvent);
   XCTAssertEqual(actualName, expectedName);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   XCTAssertEqual(actualFlags, MSFlagsPersistenceCritical);
+#pragma clang diagnostic pop
   OCMVerifyAll(self.channelUnitMock);
 }
 
@@ -1240,7 +1246,7 @@ static NSString *const kMSAnalyticsServiceName = @"Analytics";
                               transmissionTargetToken:kMSTestTransmissionToken
                                       fromApplication:YES];
 
-  //Then
+  // Then
   XCTAssertNotNil([MSAnalytics sharedInstance].defaultTransmissionTarget);
   XCTAssertTrue([service isEnabled]);
   XCTAssertTrue([service.defaultTransmissionTarget isEnabled]);
@@ -1640,18 +1646,18 @@ static NSString *const kMSAnalyticsServiceName = @"Analytics";
 
 // TODO: Modify for testing each platform when page tracking will be supported on each platform.
 - (void)testViewWillAppearSwizzling {
-  
+
   // If
   id analyticsMock = OCMPartialMock([MSAnalytics sharedInstance]);
   UIViewController *viewController = [[UIViewController alloc] init];
-  
+
   // When
   [MSAnalyticsCategory activateCategory];
   [viewController viewWillAppear:NO];
-  
+
   // Then
   OCMVerify([analyticsMock isAutoPageTrackingEnabled]);
-  
+
   // Clear
   [analyticsMock stopMocking];
 }

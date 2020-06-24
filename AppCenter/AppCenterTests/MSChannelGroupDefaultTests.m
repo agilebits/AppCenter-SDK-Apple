@@ -3,14 +3,15 @@
 
 #import "MSAbstractLogInternal.h"
 #import "MSAppCenterIngestion.h"
-#import "MSAuthTokenContext.h"
 #import "MSChannelDelegate.h"
 #import "MSChannelGroupDefault.h"
 #import "MSChannelGroupDefaultPrivate.h"
 #import "MSChannelUnitConfiguration.h"
 #import "MSChannelUnitDefault.h"
 #import "MSChannelUnitDefaultPrivate.h"
-#import "MSDispatchTestUtil.h"
+#import "MSHttpClient.h"
+#import "MSHttpTestUtil.h"
+#import "MSHttpUtil.h"
 #import "MSIngestionProtocol.h"
 #import "MSMockLog.h"
 #import "MSStorage.h"
@@ -51,7 +52,9 @@
 }
 
 - (void)tearDown {
-  [MSDispatchTestUtil awaitAndSuspendDispatchQueue:self.sut.logsDispatchQueue];
+  __weak dispatch_object_t dispatchQueue = self.sut.logsDispatchQueue;
+  self.sut = nil;
+  XCTAssertNil(dispatchQueue);
 
   // Stop mocks.
   [self.ingestionMock stopMocking];
@@ -78,6 +81,10 @@
   // When
   id<MSChannelUnitProtocol> addedChannel = [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
 
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
+
   // Then
   XCTAssertTrue([self.sut.channels containsObject:addedChannel]);
   assertThat(addedChannel, notNilValue());
@@ -92,23 +99,31 @@
   // When
   MSChannelUnitDefault *channelUnit = (MSChannelUnitDefault *)[self.sut addChannelUnitWithConfiguration:self.validConfiguration];
 
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
+
   // Then
   XCTAssertEqual(self.ingestionMock, channelUnit.ingestion);
 }
 
 - (void)testAddChannelWithCustomIngestion {
 
-  // If
-  id ingestionMockCustom = OCMClassMock([MSAppCenterIngestion class]);
+  // If, We can't use class mock of MSAppCenterIngestion because it is already class-mocked in setUp.
+  // Using more than one class mock is not supported.
+  MSAppCenterIngestion *newIngestion = [MSAppCenterIngestion new];
 
   // When
   MSChannelUnitDefault *channelUnit = (MSChannelUnitDefault *)[self.sut addChannelUnitWithConfiguration:[MSChannelUnitConfiguration new]
-                                                                                          withIngestion:ingestionMockCustom];
+                                                                                          withIngestion:newIngestion];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
   XCTAssertNotEqual(self.ingestionMock, channelUnit.ingestion);
-  XCTAssertEqual(ingestionMockCustom, channelUnit.ingestion);
-  [ingestionMockCustom stopMocking];
+  XCTAssertEqual(newIngestion, channelUnit.ingestion);
 }
 
 - (void)testDelegatesConcurrentAccess {
@@ -130,6 +145,10 @@
       [self.sut addDelegate:OCMProtocolMock(@protocol(MSChannelDelegate))];
     }
   };
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
   XCTAssertNoThrow(block());
@@ -193,9 +212,12 @@
   // When
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
 
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
+
   // Then
   OCMVerify([channelUnitMock addDelegate:(id<MSChannelDelegate>)self.sut]);
-  [self waitForLogsDispatchQueue];
   OCMVerify([channelUnitMock checkPendingLogs]);
 
   // Clear
@@ -222,6 +244,10 @@
   // When
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
 
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
+
   // Then
   OCMVerifyAll(delegateMock1);
   OCMVerifyAll(delegateMock2);
@@ -234,66 +260,57 @@
 
   // If
   NSObject *identifyingObject = [NSObject new];
-  id channelUnitMock = OCMClassMock([MSChannelUnitDefault class]);
-  OCMStub([channelUnitMock alloc]).andReturn(channelUnitMock);
-  OCMStub([channelUnitMock initWithIngestion:OCMOCK_ANY storage:OCMOCK_ANY configuration:OCMOCK_ANY logsDispatchQueue:OCMOCK_ANY])
-      .andReturn(channelUnitMock);
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
   id delegateMock = OCMProtocolMock(@protocol(MSChannelDelegate));
   [self.sut addDelegate:delegateMock];
 
   // When
-  [self.sut channel:channelUnitMock didPauseWithIdentifyingObject:identifyingObject];
+  [self.sut channel:self.sut didPauseWithIdentifyingObject:identifyingObject];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
-  OCMVerify([delegateMock channel:channelUnitMock didPauseWithIdentifyingObject:identifyingObject]);
-
-  // Clear
-  [channelUnitMock stopMocking];
+  OCMVerify([delegateMock channel:self.sut didPauseWithIdentifyingObject:identifyingObject]);
 }
 
 - (void)testDelegateCalledWhenChannelUnitResumed {
 
   // If
   NSObject *identifyingObject = [NSObject new];
-  id channelUnitMock = OCMClassMock([MSChannelUnitDefault class]);
-  OCMStub([channelUnitMock alloc]).andReturn(channelUnitMock);
-  OCMStub([channelUnitMock initWithIngestion:OCMOCK_ANY storage:OCMOCK_ANY configuration:OCMOCK_ANY logsDispatchQueue:OCMOCK_ANY])
-      .andReturn(channelUnitMock);
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
   id delegateMock = OCMProtocolMock(@protocol(MSChannelDelegate));
   [self.sut addDelegate:delegateMock];
 
   // When
-  [self.sut channel:channelUnitMock didResumeWithIdentifyingObject:identifyingObject];
+  [self.sut channel:self.sut didResumeWithIdentifyingObject:identifyingObject];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
-  OCMVerify([delegateMock channel:channelUnitMock didResumeWithIdentifyingObject:identifyingObject]);
-
-  // Clear
-  [channelUnitMock stopMocking];
+  OCMVerify([delegateMock channel:self.sut didResumeWithIdentifyingObject:identifyingObject]);
 }
 
 - (void)testDelegateCalledWhenChannelUnitPreparesLog {
 
   // If
   id<MSLog> mockLog = [MSMockLog new];
-  id channelUnitMock = OCMClassMock([MSChannelUnitDefault class]);
-  OCMStub([channelUnitMock alloc]).andReturn(channelUnitMock);
-  OCMStub([channelUnitMock initWithIngestion:OCMOCK_ANY storage:OCMOCK_ANY configuration:OCMOCK_ANY logsDispatchQueue:OCMOCK_ANY])
-      .andReturn(channelUnitMock);
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
   id delegateMock = OCMProtocolMock(@protocol(MSChannelDelegate));
   [self.sut addDelegate:delegateMock];
 
   // When
-  [self.sut channel:channelUnitMock prepareLog:mockLog];
+  [self.sut channel:self.sut prepareLog:mockLog];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
-  OCMVerify([delegateMock channel:channelUnitMock prepareLog:mockLog]);
-
-  // Clear
-  [channelUnitMock stopMocking];
+  OCMVerify([delegateMock channel:self.sut prepareLog:mockLog]);
 }
 
 - (void)testDelegateCalledWhenChannelUnitDidPrepareLog {
@@ -301,22 +318,19 @@
   // If
   id<MSLog> mockLog = [MSMockLog new];
   NSString *internalId = @"mockId";
-  id channelUnitMock = OCMClassMock([MSChannelUnitDefault class]);
-  OCMStub([channelUnitMock alloc]).andReturn(channelUnitMock);
-  OCMStub([channelUnitMock initWithIngestion:OCMOCK_ANY storage:OCMOCK_ANY configuration:OCMOCK_ANY logsDispatchQueue:OCMOCK_ANY])
-      .andReturn(channelUnitMock);
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
   id delegateMock = OCMProtocolMock(@protocol(MSChannelDelegate));
   [self.sut addDelegate:delegateMock];
 
   // When
-  [self.sut channel:channelUnitMock didPrepareLog:mockLog internalId:internalId flags:MSFlagsDefault];
+  [self.sut channel:self.sut didPrepareLog:mockLog internalId:internalId flags:MSFlagsDefault];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
-  OCMVerify([delegateMock channel:channelUnitMock didPrepareLog:mockLog internalId:internalId flags:MSFlagsDefault]);
-
-  // Clear
-  [channelUnitMock stopMocking];
+  OCMVerify([delegateMock channel:self.sut didPrepareLog:mockLog internalId:internalId flags:MSFlagsDefault]);
 }
 
 - (void)testDelegateCalledWhenChannelUnitDidCompleteEnqueueingLog {
@@ -324,87 +338,75 @@
   // If
   id<MSLog> mockLog = [MSMockLog new];
   NSString *internalId = @"mockId";
-  id channelUnitMock = OCMClassMock([MSChannelUnitDefault class]);
-  OCMStub([channelUnitMock alloc]).andReturn(channelUnitMock);
-  OCMStub([channelUnitMock initWithIngestion:OCMOCK_ANY storage:OCMOCK_ANY configuration:OCMOCK_ANY logsDispatchQueue:OCMOCK_ANY])
-      .andReturn(channelUnitMock);
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
   id delegateMock = OCMProtocolMock(@protocol(MSChannelDelegate));
   [self.sut addDelegate:delegateMock];
 
   // When
-  [self.sut channel:channelUnitMock didCompleteEnqueueingLog:mockLog internalId:internalId];
+  [self.sut channel:self.sut didCompleteEnqueueingLog:mockLog internalId:internalId];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
-  OCMVerify([delegateMock channel:channelUnitMock didCompleteEnqueueingLog:mockLog internalId:internalId]);
-
-  // Clear
-  [channelUnitMock stopMocking];
+  OCMVerify([delegateMock channel:self.sut didCompleteEnqueueingLog:mockLog internalId:internalId]);
 }
 
 - (void)testDelegateCalledWhenChannelUnitWillSendLog {
 
   // If
   id<MSLog> mockLog = [MSMockLog new];
-  id channelUnitMock = OCMClassMock([MSChannelUnitDefault class]);
-  OCMStub([channelUnitMock alloc]).andReturn(channelUnitMock);
-  OCMStub([channelUnitMock initWithIngestion:OCMOCK_ANY storage:OCMOCK_ANY configuration:OCMOCK_ANY logsDispatchQueue:OCMOCK_ANY])
-      .andReturn(channelUnitMock);
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
   id delegateMock = OCMProtocolMock(@protocol(MSChannelDelegate));
   [self.sut addDelegate:delegateMock];
 
   // When
-  [self.sut channel:channelUnitMock willSendLog:mockLog];
+  [self.sut channel:self.sut willSendLog:mockLog];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
-  OCMVerify([delegateMock channel:channelUnitMock willSendLog:mockLog]);
-
-  // Clear
-  [channelUnitMock stopMocking];
+  OCMVerify([delegateMock channel:self.sut willSendLog:mockLog]);
 }
 
 - (void)testDelegateCalledWhenChannelUnitDidSucceedSendingLog {
 
   // If
   id<MSLog> mockLog = [MSMockLog new];
-  id channelUnitMock = OCMClassMock([MSChannelUnitDefault class]);
-  OCMStub([channelUnitMock alloc]).andReturn(channelUnitMock);
-  OCMStub([channelUnitMock initWithIngestion:OCMOCK_ANY storage:OCMOCK_ANY configuration:OCMOCK_ANY logsDispatchQueue:OCMOCK_ANY])
-      .andReturn(channelUnitMock);
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
   id delegateMock = OCMProtocolMock(@protocol(MSChannelDelegate));
   [self.sut addDelegate:delegateMock];
 
   // When
-  [self.sut channel:channelUnitMock didSucceedSendingLog:mockLog];
+  [self.sut channel:self.sut didSucceedSendingLog:mockLog];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
-  OCMVerify([delegateMock channel:channelUnitMock didSucceedSendingLog:mockLog]);
-
-  // Clear
-  [channelUnitMock stopMocking];
+  OCMVerify([delegateMock channel:self.sut didSucceedSendingLog:mockLog]);
 }
 
 - (void)testDelegateCalledWhenChannelUnitDidSetEnabled {
 
   // If
-  id channelUnitMock = OCMClassMock([MSChannelUnitDefault class]);
-  OCMStub([channelUnitMock alloc]).andReturn(channelUnitMock);
-  OCMStub([channelUnitMock initWithIngestion:OCMOCK_ANY storage:OCMOCK_ANY configuration:OCMOCK_ANY logsDispatchQueue:OCMOCK_ANY])
-      .andReturn(channelUnitMock);
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
   id delegateMock = OCMProtocolMock(@protocol(MSChannelDelegate));
   [self.sut addDelegate:delegateMock];
 
   // When
-  [self.sut channel:channelUnitMock didSetEnabled:YES andDeleteDataOnDisabled:YES];
+  [self.sut channel:self.sut didSetEnabled:YES andDeleteDataOnDisabled:YES];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
-  OCMVerify([delegateMock channel:channelUnitMock didSetEnabled:YES andDeleteDataOnDisabled:YES]);
-
-  // Clear
-  [channelUnitMock stopMocking];
+  OCMVerify([delegateMock channel:self.sut didSetEnabled:YES andDeleteDataOnDisabled:YES]);
 }
 
 - (void)testDelegateCalledWhenChannelUnitDidFailSendingLog {
@@ -412,22 +414,19 @@
   // If
   id<MSLog> mockLog = [MSMockLog new];
   NSError *error = [NSError new];
-  id channelUnitMock = OCMClassMock([MSChannelUnitDefault class]);
-  OCMStub([channelUnitMock alloc]).andReturn(channelUnitMock);
-  OCMStub([channelUnitMock initWithIngestion:OCMOCK_ANY storage:OCMOCK_ANY configuration:OCMOCK_ANY logsDispatchQueue:OCMOCK_ANY])
-      .andReturn(channelUnitMock);
   [self.sut addChannelUnitWithConfiguration:self.validConfiguration];
   id delegateMock = OCMProtocolMock(@protocol(MSChannelDelegate));
   [self.sut addDelegate:delegateMock];
 
   // When
-  [self.sut channel:channelUnitMock didFailSendingLog:mockLog withError:error];
+  [self.sut channel:self.sut didFailSendingLog:mockLog withError:error];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
-  OCMVerify([delegateMock channel:channelUnitMock didFailSendingLog:mockLog withError:error]);
-
-  // Clear
-  [channelUnitMock stopMocking];
+  OCMVerify([delegateMock channel:self.sut didFailSendingLog:mockLog withError:error]);
 }
 
 - (void)testDelegateCalledWhenChannelUnitShouldFilterLog {
@@ -444,6 +443,10 @@
 
   // When
   [self.sut channelUnit:channelUnitMock shouldFilterLog:mockLog];
+
+  // This test will use a real channel unit object which runs `checkPendingLogs` in the log dispatch queue.
+  // We should make sure the test method is not finished before `checkPendingLogs` method call is finished to avoid object retain issue.
+  [self waitForLogsDispatchQueue];
 
   // Then
   OCMVerify([delegateMock channelUnit:channelUnitMock shouldFilterLog:mockLog]);

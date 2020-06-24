@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #import "MSConstants+Internal.h"
+#import "MSDispatcherUtil.h"
 #import "MSTestFrameworks.h"
 #import "MSUtility+ApplicationPrivate.h"
 #import "MSUtility+Date.h"
@@ -9,6 +10,8 @@
 #import "MSUtility+File.h"
 #import "MSUtility+PropertyValidation.h"
 #import "MSUtility+StringFormatting.h"
+
+static NSTimeInterval const kMSTestTimeout = 1.0;
 
 @interface MSUtilityTests : XCTestCase
 
@@ -45,7 +48,7 @@
 
 #pragma mark - MSUtility+Application.h
 
-#if !TARGET_OS_OSX
+#if !TARGET_OS_OSX && !TARGET_OS_MACCATALYST
 - (void)testMSAppStateMatchesUIAppStateWhenAvailable {
 
   // Then
@@ -88,7 +91,7 @@
   assertThat(@(state), is(@(expectedState)));
 }
 
-#if !TARGET_OS_OSX
+#if !TARGET_OS_OSX && !TARGET_OS_MACCATALYST
 - (void)testAppInactive {
 
   // If
@@ -154,7 +157,7 @@
 #pragma mark - MSUtility+Environment.h
 
 // FIXME: This method actually opens a dialog to ask to handle the URL on Mac.
-#if !TARGET_OS_OSX
+#if !TARGET_OS_OSX && !TARGET_OS_MACCATALYST
 - (void)testSharedAppOpenEmptyCallCallback {
 
   // If
@@ -173,7 +176,7 @@
   });
 
   // Then
-  [self waitForExpectationsWithTimeout:1
+  [self waitForExpectationsWithTimeout:kMSTestTimeout
                                handler:^(NSError *error) {
                                  XCTAssertTrue(handlerHasBeenCalled);
                                  if (error) {
@@ -217,7 +220,7 @@
 
   // Then
   NSString *result = [MSUtility appSecretFrom:uuidString];
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
 
   // When
   NSString *test = nil;
@@ -231,28 +234,28 @@
   result = [MSUtility appSecretFrom:test];
 
   // Then
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
 
   // When
   test = [NSString stringWithFormat:@"%@;target={transmissionTargetToken}", uuidString];
   result = [MSUtility appSecretFrom:test];
 
   // Then
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
 
   // When
   test = [NSString stringWithFormat:@"%@;target={transmissionTargetToken};", uuidString];
   result = [MSUtility appSecretFrom:test];
 
   // Then
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
 
   // When
   test = [NSString stringWithFormat:@"target={transmissionTargetToken};%@", uuidString];
   result = [MSUtility appSecretFrom:test];
 
   // Then
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
 
   // When
   test = [NSString stringWithFormat:@"target={transmissionTargetToken};%@;", uuidString];
@@ -260,7 +263,7 @@
   result = [MSUtility appSecretFrom:test];
 
   // Then
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
 
   // When
   test = @"target={transmissionTargetToken}";
@@ -281,35 +284,57 @@
   result = [MSUtility appSecretFrom:test];
 
   // Then
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
 
   // When
   test = [NSString stringWithFormat:@"appsecret=%@;", uuidString];
   result = [MSUtility appSecretFrom:test];
 
   // Then
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
 
   // When
   test = [NSString stringWithFormat:@"appsecret=%@", uuidString];
   result = [MSUtility appSecretFrom:test];
 
   // Then
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
 
   // When
   test = [NSString stringWithFormat:@"target={transmissionTargetToken};appsecret=%@;", uuidString];
   result = [MSUtility appSecretFrom:test];
 
   // Then
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
 
   // When
   test = [NSString stringWithFormat:@"target={transmissionTargetToken};appsecret=%@", uuidString];
   result = [MSUtility appSecretFrom:test];
 
   // Then
-  XCTAssertTrue([uuidString isEqualToString:result]);
+  XCTAssertEqualObjects(uuidString, result);
+#if TARGET_OS_IOS && !TARGET_OS_MACCATALYST
+  // When
+  test = [NSString stringWithFormat:@"targetIos={transmissionTargetToken};ios=%@", uuidString];
+  result = [MSUtility appSecretFrom:test];
+
+  // Then
+  XCTAssertEqualObjects(uuidString, result);
+  
+  // When
+  test = [NSString stringWithFormat:@"macos=fake;ios=%@", uuidString];
+  result = [MSUtility appSecretFrom:test];
+
+  // Then
+  XCTAssertEqualObjects(uuidString, result);
+  
+  // When
+  test = @"ios={app-secret};macos={fake};appsecret=fake";
+  result = [MSUtility appSecretFrom:test];
+
+  // Then
+  XCTAssertEqualObjects(result, @"{app-secret}");
+#endif
 }
 
 - (void)testTransmissionTokenFrom {
@@ -340,49 +365,49 @@
   result = [MSUtility transmissionTargetTokenFrom:test];
 
   // Then
-  XCTAssertTrue([result isEqualToString:@"{transmissionTargetToken}"]);
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
 
   // When
   test = @"{app-secret};target={transmissionTargetToken};";
   result = [MSUtility transmissionTargetTokenFrom:test];
 
   // Then
-  XCTAssertTrue([result isEqualToString:@"{transmissionTargetToken}"]);
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
 
   // When
   test = @"target={transmissionTargetToken};{app-secret}";
   result = [MSUtility transmissionTargetTokenFrom:test];
 
   // Then
-  XCTAssertTrue([result isEqualToString:@"{transmissionTargetToken}"]);
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
 
   // When
   test = @"target={transmissionTargetToken};{app-secret};";
   result = [MSUtility transmissionTargetTokenFrom:test];
 
   // Then
-  XCTAssertTrue([result isEqualToString:@"{transmissionTargetToken}"]);
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
 
   // When
   test = @"target={transmissionTargetToken}";
   result = [MSUtility transmissionTargetTokenFrom:test];
 
   // Then
-  XCTAssertTrue([result isEqualToString:@"{transmissionTargetToken}"]);
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
 
   // When
   test = @"target={transmissionTargetToken};";
   result = [MSUtility transmissionTargetTokenFrom:test];
 
   // Then
-  XCTAssertTrue([result isEqualToString:@"{transmissionTargetToken}"]);
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
 
   // When
   test = @"appsecret={app-secret};target={transmissionTargetToken};";
   result = [MSUtility transmissionTargetTokenFrom:test];
 
   // Then
-  XCTAssertTrue([result isEqualToString:@"{transmissionTargetToken}"]);
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
 
   // When
   test = @"appsecret={app-secret};";
@@ -403,15 +428,50 @@
   result = [MSUtility transmissionTargetTokenFrom:test];
 
   // Then
-  XCTAssertTrue([result isEqualToString:@"{transmissionTargetToken}"]);
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
 
   // When
   test = @"target={transmissionTargetToken};appsecret={app-secret}";
   result = [MSUtility transmissionTargetTokenFrom:test];
 
   // Then
-  XCTAssertTrue([result isEqualToString:@"{transmissionTargetToken}"]);
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
+#if TARGET_OS_IOS && !TARGET_OS_MACCATALYST
+  // When
+  test = @"target={transmissionTargetToken};ios={app-secret}";
+  result = [MSUtility transmissionTargetTokenFrom:test];
+
+  // Then
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
+  
+  // When
+  test = @"target={transmissionTargetToken};targetMacos={fake}";
+  result = [MSUtility transmissionTargetTokenFrom:test];
+
+  // Then
+  XCTAssertEqualObjects(result, @"{transmissionTargetToken}");
+#endif
 }
+
+#if TARGET_OS_MACCATALYST
+
+- (void)testAppSecretCatalystFrom {
+  
+  // When
+  NSString *test = @"ios={fake};macos={app-secret}";
+  NSString *result = [MSUtility appSecretFrom:test];
+
+  // Then
+  XCTAssertEqualObjects(result, @"{app-secret}");
+  
+  // When
+  test = @"ios={fake};macos={app-secret};appsecret=fake";
+  result = [MSUtility appSecretFrom:test];
+
+  // Then
+  XCTAssertEqualObjects(result, @"{app-secret}");
+}
+#endif
 
 - (void)testInvalidSecretOrTokenInput {
 
@@ -423,7 +483,7 @@
 
   // Then
   XCTAssertNil(tokenResult);
-  XCTAssertTrue([guidString isEqualToString:secretResult]);
+  XCTAssertEqualObjects(guidString, secretResult);
 
   // When
   test = @"target=;target=;appsecret=;appsecret=;";
@@ -442,8 +502,8 @@
 
   // Then
   XCTAssertNotNil(secretResult);
-  XCTAssertTrue([guidString isEqualToString:secretResult]);
-  XCTAssertTrue([tokenResult isEqualToString:@"{transmissionTargetToken}"]);
+  XCTAssertEqualObjects(guidString, secretResult);
+  XCTAssertEqualObjects(tokenResult, @"{transmissionTargetToken}");
 }
 
 - (void)testValidatePropertyType {
@@ -600,8 +660,8 @@
 #if TARGET_OS_TV
   expectedFile = @"/Library/Caches/com.microsoft.appcenter/testing/afile.test";
 #else
-#if TARGET_OS_OSX
-  expectedFile = @"/Library/Application%20Support/(null)/com.microsoft.appcenter/testing/afile.test";
+#if TARGET_OS_OSX || TARGET_OS_MACCATALYST
+  expectedFile = [self getPathWithBundleIdentifier:@"/Library/Application%%20Support/%@/com.microsoft.appcenter/testing/afile.test"];
 #else
   expectedFile = @"/Library/Application%20Support/com.microsoft.appcenter/testing/afile.test";
 #endif
@@ -653,8 +713,8 @@
 #if TARGET_OS_TV
   expectedFile = @"/Library/Caches/com.microsoft.appcenter/testing/anotherfile.test";
 #else
-#if TARGET_OS_OSX
-  expectedFile = @"/Library/Application%20Support/(null)/com.microsoft.appcenter/testing/anotherfile.test";
+#if TARGET_OS_OSX || TARGET_OS_MACCATALYST
+  expectedFile = [self getPathWithBundleIdentifier:@"/Library/Application%%20Support/%@/com.microsoft.appcenter/testing/anotherfile.test" ];
 #else
   expectedFile = @"/Library/Application%20Support/com.microsoft.appcenter/testing/anotherfile.test";
 #endif
@@ -681,8 +741,8 @@
 #if TARGET_OS_TV
   expectedFile = @"/Library/Caches/com.microsoft.appcenter/testing";
 #else
-#if TARGET_OS_OSX
-  expectedFile = @"/Library/Application%20Support/(null)/com.microsoft.appcenter/testing";
+#if TARGET_OS_OSX || TARGET_OS_MACCATALYST
+  expectedFile = [self getPathWithBundleIdentifier:@"/Library/Application%%20Support/%@/com.microsoft.appcenter/testing"];
 #else
   expectedFile = @"/Library/Application%20Support/com.microsoft.appcenter/testing";
 #endif
@@ -779,8 +839,8 @@
 #if TARGET_OS_TV
   expectedFile = @"/Library/Caches/com.microsoft.appcenter/testing/anotherfile.test";
 #else
-#if TARGET_OS_OSX
-  expectedFile = @"/Library/Application%20Support/(null)/com.microsoft.appcenter/testing/anotherfile.test";
+#if TARGET_OS_OSX || TARGET_OS_MACCATALYST
+  expectedFile = [self getPathWithBundleIdentifier:@"/Library/Application%%20Support/%@/com.microsoft.appcenter/testing/anotherfile.test"];
 #else
   expectedFile = @"/Library/Application%20Support/com.microsoft.appcenter/testing/anotherfile.test";
 #endif
@@ -892,6 +952,113 @@
   // Then
   XCTAssertTrue([obfuscatedString rangeOfString:@"abc"].location == NSNotFound);
   XCTAssertFalse([obfuscatedString rangeOfString:kMSRedirectUriObfuscatedTemplate].location == NSNotFound);
+}
+
+- (void)testDispatchObjectMacro {
+
+  // If
+  NSMutableArray *array = [NSMutableArray new];
+
+  // When
+  MS_DISPATCH_SELECTOR((void (*)(id, SEL, id)), array, addObject:, @"test");
+
+  // Then
+  XCTAssertEqual([array count], 1);
+  XCTAssertEqual([array firstObject], @"test");
+}
+
+- (void)testDispatchObjectMacroWithNil {
+  
+  // If
+  XCTestExpectation *expectation = [self expectationWithDescription:@"Dispatch selector executed."];
+  typedef void (^block)(NSString *, NSString *);
+    
+  // When
+  MS_DISPATCH_SELECTOR((void (*)(id, SEL, NSString *, NSString *, block)), self, methodWithArgs:secondArg:completionHandler:, nil, @"test",
+                       ^(NSString *firstArg, NSString *secondArg) {
+                         XCTAssertNil(firstArg);
+                         XCTAssertEqual(secondArg, @"test");
+                         [expectation fulfill];
+                       });
+    
+  // Then
+  [self waitForExpectationsWithTimeout:kMSTestTimeout
+                               handler:^(NSError *error) {
+                                 if (error) {
+                                   XCTFail(@"Expectation Failed with error: %@", error);
+                                 }
+                               }];
+}
+
+- (void)testPerformBlockOnMainThread {
+
+  // If
+  XCTestExpectation *expectation = [self expectationWithDescription:@"method called."];
+  NSString *str = @"expectedString";
+
+  // When
+  [MSDispatcherUtil performBlockOnMainThread:^{
+    [self methodToCall:str
+        completionHandler:^(NSString *string) {
+          XCTAssertEqual(str, string);
+          [expectation fulfill];
+        }];
+  }];
+
+  // Then
+  [self waitForExpectationsWithTimeout:kMSTestTimeout
+                               handler:^(NSError *error) {
+                                 if (error) {
+                                   XCTFail(@"Expectation Failed with error: %@", error);
+                                 }
+                               }];
+}
+
+- (void)testPerformBlockOnMainThreadFromBackground {
+
+  // If
+  XCTestExpectation *expectation = [self expectationWithDescription:@"method called."];
+  NSString *str = @"expectedString";
+
+  // When
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    [MSDispatcherUtil performBlockOnMainThread:^{
+      [self methodToCall:str
+          completionHandler:^(NSString *string) {
+            XCTAssertEqual(str, string);
+            [expectation fulfill];
+          }];
+    }];
+  });
+
+  // Then
+  [self waitForExpectationsWithTimeout:kMSTestTimeout
+                               handler:^(NSError *error) {
+                                 if (error) {
+                                   XCTFail(@"Expectation Failed with error: %@", error);
+                                 }
+                               }];
+}
+
+- (void)methodToCall:(NSString *)str completionHandler:(void (^)(NSString *string))completion {
+  completion(str);
+}
+
+- (void)methodWithArgs:(NSString *)str secondArg:(NSString *)secondStr completionHandler:(void (^)(NSString *, NSString *))completion {
+  completion(str, secondStr);
+}
+
+// Before SDK 12.2 (bundled with Xcode 10.*) when running in a unit test bundle the bundle identifier is null.
+// 12.2 and after the above bundle identifier is com.apple.dt.xctest.tool.
+- (NSString *)getPathWithBundleIdentifier:(NSString *)path {
+    NSString* bundleId;
+#if ((defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 120200) || \
+    (defined(__MAC_OS_X_VERSION_MAX_ALLOWED) && __MAC_OS_X_VERSION_MAX_ALLOWED >= 101404))
+    bundleId = @"com.apple.dt.xctest.tool";
+#else
+    bundleId = @"(null)";
+#endif
+    return [NSString stringWithFormat:path, bundleId];
 }
 
 @end
