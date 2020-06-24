@@ -277,7 +277,7 @@ static const long kMSMinUpperSizeLimitInBytes = 24 * 1024;
       [self initializeChannelGroup];
       [self applyPipelineEnabledState:self.isEnabled];
       self.sdkConfigured = YES;
-      self.configuredFromApplication |= fromApplication;
+      self.configuredFromApplication = (self.configuredFromApplication | fromApplication) != 0;
 
       /*
        * If the log level hasn't been customized before and we are not running in an app store environment, we set the default log level to
