@@ -218,6 +218,8 @@
 		9224468D1F62277400E4034A /* MSHandledErrorLogTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 922446851F6222EC00E4034A /* MSHandledErrorLogTests.m */; };
 		9224468E1F62277500E4034A /* MSHandledErrorLogTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 922446851F6222EC00E4034A /* MSHandledErrorLogTests.m */; };
 		939CA88124A4039300CC44F8 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 939CA88024A4039300CC44F8 /* UIKit.framework */; };
+		93E00AF124A635FB0036B3D7 /* libCrashReporter.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C24C9CEF2472B3C30072C35D /* libCrashReporter.a */; };
+		93E00AF324A6362A0036B3D7 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 93E00AF224A6362A0036B3D7 /* AppKit.framework */; };
 		B24F3F0F1D93368F00827213 /* MSErrorLogFormatterTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = B24F3F0E1D93368F00827213 /* MSErrorLogFormatterTests.mm */; };
 		B266B750216FECB500C9E322 /* live_report_arm64e.plcrash in Resources */ = {isa = PBXBuildFile; fileRef = B266B74F216FEC8E00C9E322 /* live_report_arm64e.plcrash */; };
 		B266B751216FECBB00C9E322 /* live_report_arm64e.plcrash in Resources */ = {isa = PBXBuildFile; fileRef = B266B74F216FEC8E00C9E322 /* live_report_arm64e.plcrash */; };
@@ -232,7 +234,6 @@
 		C2392F6D24642D9B00425640 /* OCMock.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C2392F5224642CEA00425640 /* OCMock.framework */; };
 		C2392F7024642DAD00425640 /* OCMock.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C2392F5C24642CEA00425640 /* OCMock.framework */; };
 		C24C9D1D2472B49E0072C35D /* libCrashReporter.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C24C9CF32472B3C30072C35D /* libCrashReporter.a */; };
-		C24C9D1E2472B4AA0072C35D /* libCrashReporter.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C24C9CEF2472B3C30072C35D /* libCrashReporter.a */; };
 		C24C9D1F2472B4B20072C35D /* libCrashReporter.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C24C9CF92472B3C30072C35D /* libCrashReporter.a */; };
 		C291A048237955AA0051A846 /* MSApplicationForwarderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C291A047237955AA0051A846 /* MSApplicationForwarderTests.m */; };
 		C291A049237955AA0051A846 /* MSApplicationForwarderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C291A047237955AA0051A846 /* MSApplicationForwarderTests.m */; };
@@ -937,6 +938,7 @@
 		922446851F6222EC00E4034A /* MSHandledErrorLogTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MSHandledErrorLogTests.m; sourceTree = "<group>"; };
 		939CA84624A4032A00CC44F8 /* AppCenter.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = AppCenter.xcodeproj; path = ../AppCenter/AppCenter.xcodeproj; sourceTree = "<group>"; };
 		939CA88024A4039300CC44F8 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		93E00AF224A6362A0036B3D7 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.16.sdk/System/Library/Frameworks/AppKit.framework; sourceTree = DEVELOPER_DIR; };
 		B24F3F0E1D93368F00827213 /* MSErrorLogFormatterTests.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MSErrorLogFormatterTests.mm; sourceTree = "<group>"; };
 		B24F3F101D93417B00827213 /* MSErrorLogFormatterPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSErrorLogFormatterPrivate.h; sourceTree = "<group>"; };
 		B266B74F216FEC8E00C9E322 /* live_report_arm64e.plcrash */ = {isa = PBXFileReference; lastKnownFileType = file; path = live_report_arm64e.plcrash; sourceTree = "<group>"; };
@@ -1053,8 +1055,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93E00AF324A6362A0036B3D7 /* AppKit.framework in Frameworks */,
 				C9EBAB31230D736F00A20F0F /* AppCenter.framework in Frameworks */,
-				C24C9D1E2472B4AA0072C35D /* libCrashReporter.a in Frameworks */,
+				93E00AF124A635FB0036B3D7 /* libCrashReporter.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1388,6 +1391,7 @@
 		C9A91F68230BFDFD0068070D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				93E00AF224A6362A0036B3D7 /* AppKit.framework */,
 				939CA88024A4039300CC44F8 /* UIKit.framework */,
 				C2B25A31230F07B500511D49 /* AppCenter.framework */,
 				C2B25A2B230F079800511D49 /* AppCenter.framework */,
