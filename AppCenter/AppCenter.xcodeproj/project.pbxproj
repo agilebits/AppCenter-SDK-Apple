@@ -246,6 +246,8 @@
 		9237B60D2244407000C273D8 /* MSHttpClientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9237B60B2244407000C273D8 /* MSHttpClientTests.m */; };
 		9237B60E2244407000C273D8 /* MSHttpClientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9237B60B2244407000C273D8 /* MSHttpClientTests.m */; };
 		939CA84524A4028200CC44F8 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 939CA84424A4028200CC44F8 /* Security.framework */; };
+		93F64DD424A6353900579716 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 93F64DD324A6353900579716 /* Security.framework */; };
+		93F64DD624A6354800579716 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 93F64DD524A6354800579716 /* AppKit.framework */; };
 		9CE97B2B21A4C0B900A1B160 /* MSUserIdContextTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C02498021A4BF3800C7B887 /* MSUserIdContextTests.m */; };
 		9CE97B2C21A4C0BA00A1B160 /* MSUserIdContextTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C02498021A4BF3800C7B887 /* MSUserIdContextTests.m */; };
 		9CE97B2D21A4C0BC00A1B160 /* MSUserIdContextTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C02498021A4BF3800C7B887 /* MSUserIdContextTests.m */; };
@@ -1305,6 +1307,8 @@
 		80B7EA2020CA9C9C00DF524C /* MSEncrypterPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSEncrypterPrivate.h; sourceTree = "<group>"; };
 		9237B60B2244407000C273D8 /* MSHttpClientTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MSHttpClientTests.m; sourceTree = "<group>"; };
 		939CA84424A4028200CC44F8 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		93F64DD324A6353900579716 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.16.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
+		93F64DD524A6354800579716 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.16.sdk/System/Library/Frameworks/AppKit.framework; sourceTree = DEVELOPER_DIR; };
 		9C02498021A4BF3800C7B887 /* MSUserIdContextTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MSUserIdContextTests.m; sourceTree = "<group>"; };
 		B23507B32118D22800F98D4F /* MSTicketCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MSTicketCache.m; sourceTree = "<group>"; };
 		B23507B42118D22800F98D4F /* MSTicketCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSTicketCache.h; sourceTree = "<group>"; };
@@ -1481,6 +1485,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93F64DD424A6353900579716 /* Security.framework in Frameworks */,
+				93F64DD624A6354800579716 /* AppKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1871,6 +1877,8 @@
 		939CA83B24A4028200CC44F8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				93F64DD524A6354800579716 /* AppKit.framework */,
+				93F64DD324A6353900579716 /* Security.framework */,
 				939CA84424A4028200CC44F8 /* Security.framework */,
 			);
 			name = Frameworks;
