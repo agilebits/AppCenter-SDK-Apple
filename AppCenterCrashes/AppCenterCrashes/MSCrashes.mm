@@ -21,12 +21,14 @@
 #import "MSCrashesPrivate.h"
 #import "MSCrashesUtil.h"
 #import "MSDeviceTracker.h"
+#import "MSDispatcherUtil.h"
 #import "MSEncrypter.h"
 #import "MSErrorAttachmentLog.h"
 #import "MSErrorAttachmentLogInternal.h"
 #import "MSErrorLogFormatter.h"
 #import "MSErrorReportPrivate.h"
 #import "MSHandledErrorLog.h"
+#import "MSLoggerInternal.h"
 #import "MSSessionContext.h"
 #import "MSUserIdContext.h"
 #import "MSUtility+File.h"
@@ -61,8 +63,6 @@ static NSString *const kMSLogBufferFileExtension = @"mscrasheslogbuffer";
 
 static NSString *const kMSTargetTokenFileExtension = @"targettoken";
 
-static unsigned int kMaxAttachmentsPerCrashReport = 2;
-
 static unsigned int kMaxAttachmentSize = 7 * 1024 * 1024;
 
 /**
@@ -86,7 +86,7 @@ static dispatch_once_t delayedProcessingToken;
 #pragma mark - Callbacks Setup
 
 static MSCrashesCallbacks msCrashesCallbacks = {.context = nullptr, .handleSignal = nullptr};
-static NSString *const kMSUserConfirmationKey = @"MSUserConfirmation";
+static NSString *const kMSUserConfirmationKey = @"CrashesUserConfirmation";
 static volatile BOOL writeBufferTaskStarted = NO;
 
 static void ms_save_log_buffer(const std::string &data, const std::string &path) {
@@ -274,6 +274,12 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
 #pragma mark - Service initialization
 
 - (instancetype)init {
+  [MS_APP_CENTER_USER_DEFAULTS migrateKeys:@{
+    @"MSAppCenterCrashesIsEnabled" : @"kMSCrashesIsEnabledKey",                 // [MSCrashes isEnabled]
+    @"MSAppCenterAppDidReceiveMemoryWarning" : @"MSAppDidReceiveMemoryWarning", // [MSCrashes processMemoryWarningInLastSession]
+    @"MSAppCenterCrashesUserConfirmation" : @"MSUserConfirmation" // [MSCrashes shouldAlwaysSend], [MSCrashes notifyWithUserConfirmation]
+  }
+                                forService:kMSServiceName];
   if ((self = [super init])) {
     _appStartTime = [NSDate date];
     _crashFiles = [NSMutableArray new];
@@ -349,7 +355,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
 #endif
 
     // Set up memory warning handler.
-#if !TARGET_OS_OSX
+#if !TARGET_OS_OSX && !TARGET_OS_MACCATALYST
     if (MS_IS_APP_EXTENSION) {
 #endif
       self.memoryPressureSource =
@@ -361,7 +367,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
         [strongSelf didReceiveMemoryWarning:nil];
       });
       dispatch_resume(self.memoryPressureSource);
-#if !TARGET_OS_OSX
+#if !TARGET_OS_OSX && !TARGET_OS_MACCATALYST
     } else {
       [MS_NOTIFICATION_CENTER addObserver:self
                                  selector:@selector(didReceiveMemoryWarning:)
@@ -420,7 +426,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
     [self.plCrashReporter purgePendingCrashReport];
     [self clearUnprocessedReports];
     [self clearContextHistoryAndKeepCurrentSession];
-    [MS_USER_DEFAULTS removeObjectForKey:kMSAppDidReceiveMemoryWarningKey];
+    [MS_APP_CENTER_USER_DEFAULTS removeObjectForKey:kMSAppDidReceiveMemoryWarningKey];
     MSLogInfo([MSCrashes logTag], @"Crashes service has been disabled.");
   }
 }
@@ -493,7 +499,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
 
 - (void)didReceiveMemoryWarning:(NSNotification *)__unused notification {
   MSLogDebug([MSCrashes logTag], @"The application received a low memory warning in the last session.");
-  [MS_USER_DEFAULTS setObject:@YES forKey:kMSAppDidReceiveMemoryWarningKey];
+  [MS_APP_CENTER_USER_DEFAULTS setObject:@YES forKey:kMSAppDidReceiveMemoryWarningKey];
 }
 
 #pragma mark - Channel Delegate
@@ -521,7 +527,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
 
   // The callback can be called from any thread, making sure we make this thread-safe.
   @synchronized(self) {
-    NSData *serializedLog = [NSKeyedArchiver archivedDataWithRootObject:log];
+    NSData *serializedLog = [MSUtility archiveKeyedData:log];
     if (serializedLog && (serializedLog.length > 0)) {
 
       // Serialize target token.
@@ -612,9 +618,9 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
     if ([logObject isKindOfClass:[MSAppleErrorLog class]]) {
       MSAppleErrorLog *appleErrorLog = static_cast<MSAppleErrorLog *>(log);
       MSErrorReport *report = [MSErrorLogFormatter errorReportFromLog:appleErrorLog];
-      dispatch_async(dispatch_get_main_queue(), ^{
+      [MSDispatcherUtil performBlockOnMainThread:^{
         [delegate crashes:self willSendErrorReport:report];
-      });
+      }];
     }
   }
 }
@@ -626,9 +632,9 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
     if ([logObject isKindOfClass:[MSAppleErrorLog class]]) {
       MSAppleErrorLog *appleErrorLog = static_cast<MSAppleErrorLog *>(log);
       MSErrorReport *report = [MSErrorLogFormatter errorReportFromLog:appleErrorLog];
-      dispatch_async(dispatch_get_main_queue(), ^{
+      [MSDispatcherUtil performBlockOnMainThread:^{
         [delegate crashes:self didSucceedSendingErrorReport:report];
-      });
+      }];
     }
   }
 }
@@ -640,9 +646,9 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
     if ([logObject isKindOfClass:[MSAppleErrorLog class]]) {
       MSAppleErrorLog *appleErrorLog = static_cast<MSAppleErrorLog *>(log);
       MSErrorReport *report = [MSErrorLogFormatter errorReportFromLog:appleErrorLog];
-      dispatch_async(dispatch_get_main_queue(), ^{
+      [MSDispatcherUtil performBlockOnMainThread:^{
         [delegate crashes:self didFailSendingErrorReport:report withError:error];
-      });
+      }];
     }
   }
 }
@@ -670,10 +676,10 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
   }
 #endif
   PLCrashReporterSymbolicationStrategy symbolicationStrategy = PLCrashReporterSymbolicationStrategyNone;
-  MSPLCrashReporterConfig *config = [[MSPLCrashReporterConfig alloc] initWithSignalHandlerType:signalHandlerType
-                                                                         symbolicationStrategy:symbolicationStrategy
-                                                        shouldRegisterUncaughtExceptionHandler:enableUncaughtExceptionHandler];
-  self.plCrashReporter = [[MSPLCrashReporter alloc] initWithConfiguration:config];
+  PLCrashReporterConfig *config = [[PLCrashReporterConfig alloc] initWithSignalHandlerType:signalHandlerType
+                                                                     symbolicationStrategy:symbolicationStrategy
+                                                    shouldRegisterUncaughtExceptionHandler:enableUncaughtExceptionHandler];
+  self.plCrashReporter = [[PLCrashReporter alloc] initWithConfiguration:config];
 
   /*
    * The actual signal and mach handlers are only registered when invoking `enableCrashReporterAndReturnError`, so it is safe enough to only
@@ -795,7 +801,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
   for (NSURL *fileURL in self.crashFiles) {
     NSData *crashFileData = [NSData dataWithContentsOfURL:fileURL];
     if ([crashFileData length] > 0) {
-      MSPLCrashReport *report = [[MSPLCrashReport alloc] initWithData:crashFileData error:&error];
+      PLCrashReport *report = [[PLCrashReport alloc] initWithData:crashFileData error:&error];
       if (report) {
         foundCrashReports[fileURL] = report;
         foundErrorReports[fileURL] = [MSErrorLogFormatter errorReportFromCrashReport:report];
@@ -812,7 +818,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
   // Processing step.
   for (NSURL *fileURL in [foundCrashReports allKeys]) {
     MSLogVerbose([MSCrashes logTag], @"Crash reports found");
-    MSPLCrashReport *report = foundCrashReports[fileURL];
+    PLCrashReport *report = foundCrashReports[fileURL];
     MSErrorReport *errorReport = foundErrorReports[fileURL];
     MSAppleErrorLog *log = [MSErrorLogFormatter errorLogFromCrashReport:report];
     if (!self.automaticProcessingEnabled || [self shouldProcessErrorReport:errorReport]) {
@@ -861,7 +867,19 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
     if ([[fileURL pathExtension] isEqualToString:kMSLogBufferFileExtension]) {
       NSData *serializedLog = [NSData dataWithContentsOfURL:fileURL];
       if (serializedLog && serializedLog.length && serializedLog.length > 0) {
-        id<MSLog> item = [NSKeyedUnarchiver unarchiveObjectWithData:serializedLog];
+        id<MSLog> item;
+        NSException *exception;
+
+        // Deserialize the log.
+        item = static_cast<id<MSLog>>([MSUtility unarchiveKeyedData:serializedLog]);
+        if (!item) {
+
+          // The archived log is not valid.
+          MSLogError([MSAppCenter logTag], @"Deserialization failed for log: %@",
+                     exception ? exception.reason : @"The log deserialized to NULL.");
+
+          continue;
+        }
         if (item) {
 
           // Try to set target token.
@@ -900,14 +918,14 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
   }
 
   // Read and reset the memory warning state.
-  NSNumber *didReceiveMemoryWarning = [MS_USER_DEFAULTS objectForKey:kMSAppDidReceiveMemoryWarningKey];
+  NSNumber *didReceiveMemoryWarning = [MS_APP_CENTER_USER_DEFAULTS objectForKey:kMSAppDidReceiveMemoryWarningKey];
   self.didReceiveMemoryWarningInLastSession = didReceiveMemoryWarning.boolValue;
   if (self.didReceiveMemoryWarningInLastSession) {
     MSLogDebug([MSCrashes logTag], @"The application received a low memory warning in the last session.");
   }
 
   // Clean the flag.
-  [MS_USER_DEFAULTS removeObjectForKey:kMSAppDidReceiveMemoryWarningKey];
+  [MS_APP_CENTER_USER_DEFAULTS removeObjectForKey:kMSAppDidReceiveMemoryWarningKey];
 }
 
 /**
@@ -968,7 +986,6 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
 - (void)sendErrorAttachments:(NSArray<MSErrorAttachmentLog *> *)errorAttachments withIncidentIdentifier:(NSString *)incidentIdentifier {
 
   // Send attachments log to log manager.
-  unsigned int totalProcessedAttachments = 0;
   for (MSErrorAttachmentLog *attachment in errorAttachments) {
     attachment.errorId = incidentIdentifier;
     if (![MSCrashes validatePropertiesForAttachment:attachment]) {
@@ -981,11 +998,6 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
       continue;
     }
     [self.channelUnit enqueueItem:attachment flags:MSFlagsDefault];
-    ++totalProcessedAttachments;
-  }
-  if (totalProcessedAttachments > kMaxAttachmentsPerCrashReport) {
-    MSLogWarning([MSCrashes logTag], @"A limit of %u attachments per error report / exception might be enforced by server.",
-                 kMaxAttachmentsPerCrashReport);
   }
 }
 
@@ -1016,7 +1028,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
     } else {
 
       // Get data of PLCrashReport and write it to SDK directory.
-      MSPLCrashReport *report = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
+      PLCrashReport *report = [[PLCrashReport alloc] initWithData:crashData error:&error];
       if (report) {
         NSString *cacheFilename = [NSString stringWithFormat:@"%.0f", [NSDate timeIntervalSinceReferenceDate]];
         NSString *crashPath = [NSString stringWithFormat:@"%@/%@", self.crashesPathComponent, cacheFilename];
@@ -1203,7 +1215,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
  * This is an instance method to make testing easier.
  */
 - (BOOL)shouldAlwaysSend {
-  NSNumber *flag = [MS_USER_DEFAULTS objectForKey:kMSUserConfirmationKey];
+  NSNumber *flag = [MS_APP_CENTER_USER_DEFAULTS objectForKey:kMSUserConfirmationKey];
   return flag.boolValue;
 }
 
@@ -1250,7 +1262,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
      * Always send logs. Set the flag YES to bypass user confirmation next time.
      * Continue crash processing afterwards.
      */
-    [MS_USER_DEFAULTS setObject:@YES forKey:kMSUserConfirmationKey];
+    [MS_APP_CENTER_USER_DEFAULTS setObject:@YES forKey:kMSUserConfirmationKey];
   }
 
   // Process crashes logs.

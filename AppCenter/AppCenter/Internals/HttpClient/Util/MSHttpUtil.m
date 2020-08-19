@@ -38,15 +38,9 @@
   return [secret stringByReplacingCharactersInRange:NSMakeRange(0, appSecretHiddenPart.length) withString:appSecretHiddenPart];
 }
 
-+ (NSString *)hideAuthToken:(NSString *)token {
-
-  // Hide token value.
-  NSArray<NSString *> *tokenArray = [token componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-  if (tokenArray.count == 1) {
-    return @"***";
-  }
-  NSString *prefix = [tokenArray firstObject];
-  return [prefix stringByAppendingString:@" ***"];
++ (NSString *)hideSecretInString:(NSString *)string secret:(NSString *)secret {
+  NSString *encodedSecret = [self hideSecret:secret];
+  return [string stringByReplacingOccurrencesOfString:secret withString:encodedSecret];
 }
 
 @end

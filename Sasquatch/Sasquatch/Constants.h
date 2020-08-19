@@ -4,6 +4,8 @@
 #import <Foundation/Foundation.h>
 
 static NSString *const kSASCustomizedUpdateAlertKey = @"kSASCustomizedUpdateAlertKey";
+static NSString *const kSASAutomaticCheckForUpdateDisabledKey = @"kSASAutomaticCheckForUpdateDisabledKey";
+static NSString *const kMSUpdateTrackKey = @"kMSUpdateTrackKey";
 static NSString *const kMSChildTransmissionTargetTokenKey = @"kMSChildTransmissionTargetToken";
 static NSString *const kMSTransmissionIterval = @"kMSTransmissionIterval";
 static NSString *const kMSTargetToken1 = @"602c2d529a824339bef93a7b9a035e6a-"
@@ -31,11 +33,13 @@ static NSString *const kMSObjCRuntimeTargetToken = @"1aa046cfdc8f49bdbd64190290c
                                                    @"7361";
 #endif
 
-static NSString *const kMSPuppetAppSecret = @"65dc3680-7325-4000-a0e7-dbd2276eafd1";
-static NSString *const kMSPuppetAADAppSecret = @"66957d63-b484-43e6-bb8d-b89bf37a1c08";
+static NSString *const kMSPuppetAppSecret = @"ios=65dc3680-7325-4000-a0e7-dbd2276eafd1;"
+                                            @"macos=5aa84728-2b28-468d-81bc-0aefafcf2f67";
 static NSString *const kMSObjcAppSecret = @"3ccfe7f5-ec01-4de5-883c-f563bbbe147a";
+static NSString *const kMSSwiftCombinedAppSecret = @"ios=0dbca56b-b9ae-4d53-856a-7c2856137d85;"
+                                                   @"macos=2d34dd5c-38c1-4791-b271-f2444c12292b";
 static NSString *const kMSSwiftAppSecret = @"0dbca56b-b9ae-4d53-856a-7c2856137d85";
-static NSString *const kMSSwiftObjcAADAppSecret = @"f9854e3a-0c8a-4774-9bf1-68f6dff8eb98";
+static NSString *const kMSSwiftCatalystAppSecret = @"2d34dd5c-38c1-4791-b271-f2444c12292b";
 static NSString *const kMSStartTargetKey = @"startTarget";
 static NSString *const kMSStorageMaxSizeKey = @"storageMaxSize";
 static NSNotificationName const kUpdateAnalyticsResultNotification = @"updateAnalyticsResult";
@@ -44,7 +48,7 @@ static NSString *const kMSLogUrl = @"logUrl";
 static NSString *const kMSTimeToLive = @"timeToLive";
 static NSString *const kMSAppSecret = @"appSecret";
 static NSString *const kMSUserIdentity = @"userIdentity";
-static NSString *const kMSUserConfirmationKey = @"MSUserConfirmation";
+static NSString *const kMSUserConfirmationKey = @"MSAppCenterCrashesUserConfirmation";
 
 #ifdef SQLITE_DEFAULT_PAGE_SIZE
 static int const kMSStoragePageSize = SQLITE_DEFAULT_PAGE_SIZE;
@@ -54,8 +58,16 @@ static int const kMSStoragePageSize = 4096;
 
 static NSString *const kMSIntLogUrl = @"https://in-integration.dev.avalanch.es";
 static NSString *const kMSIntConfigUrl = @"https://config-integration.dev.avalanch.es";
-static NSString *const kMSIntTokenExchangeUrl = @"https://token-exchange-mbaas-integration.dev.avalanch.es/v0.1";
 static NSString *const kMSIntApiUrl = @"https://api-gateway-core-integration.dev.avalanch.es/v0.1";
 static NSString *const kMSIntInstallUrl = @"https://install.portal-server-core-integration.dev.avalanch.es";
 
-static NSString *const kMSDataUserPartition = @"user";
+static NSString *const kMSABaseUrl = @"https://login.live.com/oauth20_";
+static NSString *const kMSARedirectEndpoint = @"desktop.srf";
+static NSString *const kMSAAuthorizeEndpoint = @"authorize.srf";
+static NSString *const kMSATokenEndpoint = @"token.srf";
+static NSString *const kMSAClientIdParam = @"&client_id=06181c2a-2403-437f-a490-9bcb06f85281";
+static NSString *const kMSARedirectParam = @"redirect_uri=https://login.live.com/oauth20_desktop.srf";
+static NSString *const kMSASignOutEndpoint = @"logout.srf";
+static NSString *const kMSARefreshParam = @"&grant_type=refresh_token&refresh_token=";
+static NSString *const kMSARefreshTokenParam = @"refresh_token";
+static NSString *const kMSAScopeParam = @"&scope=service::events.data.microsoft.com::MBI_SSL";

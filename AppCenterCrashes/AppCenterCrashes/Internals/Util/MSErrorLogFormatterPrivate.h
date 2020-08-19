@@ -3,7 +3,7 @@
 
 #import "MSErrorLogFormatter.h"
 
-@class MSPLCrashReportThreadInfo;
+@class PLCrashReportThreadInfo;
 
 @interface MSErrorLogFormatter ()
 
@@ -33,7 +33,7 @@
  *
  * @return an error id as a NSString.
  */
-+ (NSString *)errorIdForCrashReport:(MSPLCrashReport *)report;
++ (NSString *)errorIdForCrashReport:(PLCrashReport *)report;
 
 /**
  * Convenience method to add process information and application path to an error log. For simulator builds, it will anonymize the path and
@@ -45,7 +45,7 @@
  *
  * @return The error log with process information and the application path.
  */
-+ (MSAppleErrorLog *)addProcessInfoAndApplicationPathTo:(MSAppleErrorLog *)errorLog fromCrashReport:(MSPLCrashReport *)crashReport;
++ (MSAppleErrorLog *)addProcessInfoAndApplicationPathTo:(MSAppleErrorLog *)errorLog fromCrashReport:(PLCrashReport *)crashReport;
 
 /**
  * Convenience method to find the crashed thread in a crash report.
@@ -54,29 +54,18 @@
  *
  * @return The crashed thread info.
  */
-+ (MSPLCrashReportThreadInfo *)findCrashedThreadInReport:(MSPLCrashReport *)report;
-
-/**
- * Normalize an address.
- *
- * @param address The address to normalize.
- * @param is64bit A flag that indicates if this is a 64bit architecture.
- *
- * @return The normalized address.
- */
-+ (uint64_t)normalizeAddress:(uint64_t)address is64bit:(BOOL)is64bit;
++ (PLCrashReportThreadInfo *)findCrashedThreadInReport:(PLCrashReport *)report;
 
 /**
  * Extract binary images from a crash report. This only extracts the binary images that we "care" about, meaning those that are contained
  * in the crash's stack frames.
  *
  * @param report The crash report.
- * @param codeType The code type, meaning the architecture CPU code type.
  * @param is64bit A flag that indicates if this is a 64bit architecture.
  *
  * @return An array of binary images.
  */
-+ (NSArray<MSBinary *> *)extractBinaryImagesFromReport:(MSPLCrashReport *)report codeType:(NSNumber *)codeType is64bit:(BOOL)is64bit;
++ (NSArray<MSBinary *> *)extractBinaryImagesFromReport:(PLCrashReport *)report is64bit:(BOOL)is64bit;
 
 /**
  * Format a memory address into a string. This normalizes arm64 addresses.

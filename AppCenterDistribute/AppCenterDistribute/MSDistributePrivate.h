@@ -63,52 +63,52 @@ static NSString *const kMSDefaultCustomSchemeFormat = @"appcenter-%@";
 /**
  * The storage key for postponed timestamp.
  */
-static NSString *const kMSPostponedTimestampKey = @"MSPostponedTimestamp";
+static NSString *const kMSPostponedTimestampKey = @"PostponedTimestamp";
 
 /**
  * The storage key for request ID.
  */
-static NSString *const kMSUpdateTokenRequestIdKey = @"MSUpdateTokenRequestId";
+static NSString *const kMSUpdateTokenRequestIdKey = @"UpdateTokenRequestId";
 
 /**
  * The storage key for flag that can determine to clean up update token.
  */
-static NSString *const kMSSDKHasLaunchedWithDistribute = @"MSSDKHasLaunchedWithDistribute";
+static NSString *const kMSSDKHasLaunchedWithDistribute = @"SDKHasLaunchedWithDistribute";
 
 /**
  * The storage key for last mandatory release details.
  */
-static NSString *const kMSMandatoryReleaseKey = @"MSMandatoryRelease";
+static NSString *const kMSMandatoryReleaseKey = @"MandatoryRelease";
 
 /**
  * The storage key for distribution group ID.
  */
-static NSString *const kMSDistributionGroupIdKey = @"MSDistributionGroupId";
+static NSString *const kMSDistributionGroupIdKey = @"DistributionGroupId";
 
 /**
  * The storage key for update setup failure package hash.
  */
-static NSString *const kMSUpdateSetupFailedPackageHashKey = @"MSUpdateSetupFailedPackageHash";
+static NSString *const kMSUpdateSetupFailedPackageHashKey = @"UpdateSetupFailedPackageHash";
 
 /**
  * The storage key for latest downloaded release hash.
  */
-static NSString *const kMSDownloadedReleaseHashKey = @"MSDownloadedReleaseHash";
+static NSString *const kMSDownloadedReleaseHashKey = @"DownloadedReleaseHash";
 
 /**
  * The storage key for latest downloaded release ID.
  */
-static NSString *const kMSDownloadedReleaseIdKey = @"MSDownloadedReleaseId";
+static NSString *const kMSDownloadedReleaseIdKey = @"DownloadedReleaseId";
 
 /**
  * The storage key for distribution group ID of latest downloaded release.
  */
-static NSString *const kMSDownloadedDistributionGroupIdKey = @"MSDownloadedDistributionGroupId";
+static NSString *const kMSDownloadedDistributionGroupIdKey = @"DownloadedDistributionGroupId";
 
 /**
  * The storage key for tester app update setup failure.
  */
-static NSString *const kMSTesterAppUpdateSetupFailedKey = @"MSTesterAppUpdateSetupFailed";
+static NSString *const kMSTesterAppUpdateSetupFailedKey = @"TesterAppUpdateSetupFailed";
 
 @interface MSDistribute ()
 
@@ -137,12 +137,30 @@ static NSString *const kMSTesterAppUpdateSetupFailedKey = @"MSTesterAppUpdateSet
  */
 @property(nonatomic) id<MSCustomApplicationDelegate> appDelegate;
 
-@property(nonatomic) id _Nullable authenticationSession;
+/**
+ * Authentication session instance.
+ */
+@property(nullable, nonatomic) SFAuthenticationSession *authenticationSession API_AVAILABLE(ios(11.0));
 
 /**
  * Distribute info tracking component which adds extra fields to logs.
  */
 @property(nonatomic) MSDistributeInfoTracker *distributeInfoTracker;
+
+/**
+ * A flag that indicates whether update flow is in progress or not.
+ */
+@property(atomic) BOOL updateFlowInProgress;
+
+/**
+ * Update track.
+ */
+@property(nonatomic) MSUpdateTrack updateTrack;
+
+/**
+ * A flag to indicate whether automatic update check is disabled on start or not.
+ */
+@property(atomic) BOOL automaticCheckForUpdateDisabled;
 
 /**
  * Returns the singleton instance. Meant for testing/demo apps only.
@@ -163,6 +181,11 @@ static NSString *const kMSTesterAppUpdateSetupFailedKey = @"MSTesterAppUpdateSet
 - (nullable NSURL *)buildTokenRequestURLWithAppSecret:(NSString *)appSecret
                                           releaseHash:(NSString *)releaseHash
                                           isTesterApp:(BOOL)isTesterApp;
+
+/**
+ * Disable checking the latest release of the application when the SDK starts.
+ */
+- (void)disableAutomaticCheckForUpdate;
 
 /**
  * Open the given URL using the openURL method in the Shared Application.
@@ -212,7 +235,7 @@ static NSString *const kMSTesterAppUpdateSetupFailedKey = @"MSTesterAppUpdateSet
  * @param releaseHash The release hash of the current version.
  */
 - (void)checkLatestRelease:(nullable NSString *)updateToken
-       distributionGroupId:(NSString *)distributionGroupId
+       distributionGroupId:(nullable NSString *)distributionGroupId
                releaseHash:(NSString *)releaseHash;
 
 /**
@@ -254,15 +277,15 @@ static NSString *const kMSTesterAppUpdateSetupFailedKey = @"MSTesterAppUpdateSet
 /**
  * Get reporting parameters for updated release.
  *
- * @param updateToken The update token stored in keychain. This value can be nil if it is public distribution.
+ * @param isPublic YES if reporting stats for a public track, NO otherwise.
  * @param currentInstalledReleaseHash The release hash of the current version.
  * @param distributionGroupId The distribution group Id in keychain.
  *
  * @return Reporting parameters dictionary.
  */
-- (nullable NSMutableDictionary *)getReportingParametersForUpdatedRelease:(NSString *)updateToken
+- (nullable NSMutableDictionary *)getReportingParametersForUpdatedRelease:(BOOL)isPublic
                                               currentInstalledReleaseHash:(NSString *)currentInstalledReleaseHash
-                                                      distributionGroupId:(NSString *)distributionGroupId;
+                                                      distributionGroupId:(nullable NSString *)distributionGroupId;
 
 /**
  * After an app is updated and restarted, check if an updated release has different group ID and update current group ID if needed. Group ID
@@ -316,9 +339,11 @@ static NSString *const kMSTesterAppUpdateSetupFailedKey = @"MSTesterAppUpdateSet
 - (void)dismissEmbeddedSafari;
 
 /**
- * Start update workflow
+ * Start update workflow.
+ *
+ * @param onStart A flag that indicates whether it is called when Distribute is started or not.
  */
-- (void)startUpdate;
+- (void)startUpdateOnStart:(BOOL)onStart;
 
 /**
  * Start download for the given details.
@@ -329,6 +354,16 @@ static NSString *const kMSTesterAppUpdateSetupFailedKey = @"MSTesterAppUpdateSet
  * Close application for update.
  */
 - (void)closeApp;
+
+/**
+ * Check for the latest release using the selected update track.
+ */
+- (void)checkForUpdate;
+
+/**
+ * Method to reset the singleton when running tests only. So calling sharedInstance returns a fresh instance.
+ */
++ (void)resetSharedInstance;
 
 @end
 

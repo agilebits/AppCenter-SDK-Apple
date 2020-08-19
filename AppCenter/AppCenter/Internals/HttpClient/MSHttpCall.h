@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#import "MSHttpClientProtocol.h"
 #import <Foundation/Foundation.h>
+
+#import "MSHttpClientProtocol.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -11,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Request body.
  */
-@property(nonatomic) NSData *data;
+@property(nonatomic, nullable) NSData *data;
 
 /**
  * Request headers.
@@ -82,7 +83,7 @@ NS_ASSUME_NONNULL_BEGIN
  * is milliseconds.
  * @param event The callback to be invoked after the timer.
  */
-- (void)startRetryTimerWithStatusCode:(NSUInteger)statusCode retryAfter:(NSNumber *)retryAfter event:(dispatch_block_t)event;
+- (void)startRetryTimerWithStatusCode:(NSUInteger)statusCode retryAfter:(nullable NSNumber *)retryAfter event:(dispatch_block_t)event;
 
 /**
  * Indicate if the limit of maximum retries has been reached.

@@ -35,16 +35,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, MSCrashesDelegate, MSPushDel
       alert.addButton(withTitle: "Always send")
       alert.addButton(withTitle: "Send")
       alert.addButton(withTitle: "Don't send")
-      alert.alertStyle = NSWarningAlertStyle
+      alert.alertStyle = .warning
 
       switch (alert.runModal()) {
-      case NSAlertFirstButtonReturn:
+      case .alertFirstButtonReturn:
         MSCrashes.notify(with: .always)
         break;
-      case NSAlertSecondButtonReturn:
+      case .alertSecondButtonReturn:
         MSCrashes.notify(with: .send)
         break;
-      case NSAlertThirdButtonReturn:
+      case .alertThirdButtonReturn:
         MSCrashes.notify(with: .dontSend)
         break;
       default:
@@ -66,12 +66,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, MSCrashesDelegate, MSPushDel
     let logUrl = UserDefaults.standard.string(forKey: kMSLogUrl)
     if logUrl != nil {
       MSAppCenter.setLogUrl(logUrl)
-    }
-
-    // Set user id.
-    let userId = UserDefaults.standard.string(forKey: kMSUserIdKey)
-    if userId != nil {
-      MSAppCenter.setUserId(userId)
     }
     
     // Set location manager.
@@ -114,6 +108,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, MSCrashesDelegate, MSPushDel
         break
     case .skip:
         break
+    }
+      
+    // Set user id.
+    let userId = UserDefaults.standard.string(forKey: kMSUserIdKey)
+    if userId != nil {
+      MSAppCenter.setUserId(userId)
     }
 
     AppCenterProvider.shared().appCenter = AppCenterDelegateSwift()

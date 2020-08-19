@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name              = 'AppCenter'
-  s.version           = '2.5.3'
+  s.version           = '3.3.2'
 
   s.summary           = 'Visual Studio App Center is your continuous integration, delivery and learning solution for iOS and macOS apps.'
   s.description       = <<-DESC
@@ -21,19 +21,13 @@ Pod::Spec.new do |s|
                       4. App Center Push (iOS and macOS):
                       App Center Push enables you to send push notifications to users of your app from the App Center portal. You can also segment your user base based on a set of properties and send them targeted notifications. Not available for tvOS SDK.
 
-                      5. App Center Data (iOS only):
-                      The App Center Data service provides functionality enabling developers to persist app data in the cloud in both online and offline scenarios. This enables you to store and manage both user-specific data as well as data shared between users and across platforms.
-
-                      6. App Center Auth (iOS only):
-                      App Center Auth is a cloud-based identity management service that enables developers to authenticate application users and manage user identities. The service integrates with other parts of App Center, enabling developers to leverage the user identity to view user data in other services and even send push notifications to users instead of individual devices.
-
                         DESC
 
   s.homepage          = 'https://appcenter.ms'
   s.documentation_url = "https://docs.microsoft.com/en-us/appcenter/sdk"
   s.social_media_url = 'https://twitter.com/vsappcenter'
 
-  s.license           = { :type => 'MIT', :file => 'AppCenter-SDK-Apple/iOS/LICENSE' }
+  s.license           = { :type => 'MIT', :file => 'AppCenter-SDK-Apple/LICENSE' }
   s.author            = { 'Microsoft' => 'appcentersdk@microsoft.com' }
 
   s.ios.deployment_target = '9.0'
@@ -41,9 +35,7 @@ Pod::Spec.new do |s|
   s.tvos.deployment_target = '11.0'
   s.source = { :http => "https://github.com/microsoft/appcenter-sdk-apple/releases/download/#{s.version}/AppCenter-SDK-Apple-#{s.version}.zip" }
 
-  s.ios.preserve_path = 'AppCenter-SDK-Apple/iOS/README.md'
-  s.osx.preserve_path = 'AppCenter-SDK-Apple/macOS/README.md'
-  s.tvos.preserve_path = 'AppCenter-SDK-Apple/tvOS/README.md'
+  s.preserve_path = 'AppCenter-SDK-Apple/README.md'
 
   s.default_subspecs = 'Analytics', 'Crashes'
 
@@ -96,20 +88,5 @@ Pod::Spec.new do |s|
     ss.ios.vendored_frameworks = "AppCenter-SDK-Apple/iOS/AppCenterPush.framework"
     ss.osx.vendored_frameworks = "AppCenter-SDK-Apple/macOS/AppCenterPush.framework"
  end
-
-  s.subspec 'Data' do |ss|
-    ss.dependency 'AppCenter/Core'
-    ss.frameworks = 'Foundation'
-    ss.ios.frameworks = 'UIKit'
-    ss.ios.vendored_frameworks = "AppCenter-SDK-Apple/iOS/AppCenterData.framework"
-  end
-
-  s.subspec 'Auth' do |ss|
-    ss.dependency 'AppCenter/Core'
-    ss.frameworks = 'Foundation'
-    ss.ios.frameworks = 'UIKit', 'WebKit'
-    ss.ios.weak_frameworks = 'SafariServices', 'AuthenticationServices'
-    ss.ios.vendored_frameworks = "AppCenter-SDK-Apple/iOS/AppCenterAuth.framework"
-  end
 
 end

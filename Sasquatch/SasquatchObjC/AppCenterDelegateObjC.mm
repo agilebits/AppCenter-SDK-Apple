@@ -1,35 +1,28 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-
 #if GCC_PREPROCESSOR_MACRO_PUPPET
 #import "AppCenter.h"
 #import "AppCenterAnalytics.h"
-#import "AppCenterAuth.h"
 #import "AppCenterCrashes.h"
-#import "AppCenterData.h"
+#if !TARGET_OS_MACCATALYST
 #import "AppCenterDistribute.h"
 #import "AppCenterPush.h"
-
+#endif
 // Internal
 #import "MSAnalyticsInternal.h"
 #import "MSAppCenterInternal.h"
-#import "MSAuthPrivate.h"
 
 #elif GCC_PREPROCESSOR_MACRO_SASQUATCH_OBJC
 #import <AppCenter/AppCenter.h>
 #import <AppCenterAnalytics/AppCenterAnalytics.h>
-#import <AppCenterAuth/AppCenterAuth.h>
 #import <AppCenterCrashes/AppCenterCrashes.h>
-#import <AppCenterData/AppCenterData.h>
 #import <AppCenterDistribute/AppCenterDistribute.h>
 #import <AppCenterPush/AppCenterPush.h>
 #else
 @import AppCenter;
 @import AppCenterAnalytics;
-@import AppCenterAuth;
 @import AppCenterCrashes;
-@import AppCenterData;
 @import AppCenterDistribute;
 @import AppCenterPush;
 #endif
@@ -59,22 +52,6 @@
 - (NSString *)appSecret {
 #if GCC_PREPROCESSOR_MACRO_PUPPET
   return [[MSAppCenter sharedInstance] appSecret];
-#else
-  return kMSObjcAppSecret;
-#endif
-}
-
-- (NSString *)appSecretAAD {
-#if GCC_PREPROCESSOR_MACRO_PUPPET
-  return kMSPuppetAADAppSecret;
-#else
-  return kMSSwiftObjcAADAppSecret;
-#endif
-}
-
-- (NSString *)appSecretB2C {
-#if GCC_PREPROCESSOR_MACRO_PUPPET
-  return kMSPuppetAppSecret;
 #else
   return kMSObjcAppSecret;
 #endif
@@ -119,35 +96,39 @@
 }
 
 - (BOOL)isDistributeEnabled {
+#if !TARGET_OS_MACCATALYST
   return [MSDistribute isEnabled];
-}
-
-- (BOOL)isAuthEnabled {
-  return [MSAuth isEnabled];
+#else
+  return NO;
+#endif
 }
 
 - (BOOL)isPushEnabled {
+#if !TARGET_OS_MACCATALYST
   return [MSPush isEnabled];
+#else
+  return NO;
+#endif
 }
 
 - (void)setAnalyticsEnabled:(BOOL)isEnabled {
-  return [MSAnalytics setEnabled:isEnabled];
+  [MSAnalytics setEnabled:isEnabled];
 }
 
 - (void)setCrashesEnabled:(BOOL)isEnabled {
-  return [MSCrashes setEnabled:isEnabled];
+  [MSCrashes setEnabled:isEnabled];
 }
 
 - (void)setDistributeEnabled:(BOOL)isEnabled {
-  return [MSDistribute setEnabled:isEnabled];
-}
-
-- (void)setAuthEnabled:(BOOL)isEnabled {
-  return [MSAuth setEnabled:isEnabled];
+#if !TARGET_OS_MACCATALYST
+  [MSDistribute setEnabled:isEnabled];
+#endif
 }
 
 - (void)setPushEnabled:(BOOL)isEnabled {
-  return [MSPush setEnabled:isEnabled];
+#if !TARGET_OS_MACCATALYST
+  [MSPush setEnabled:isEnabled];
+#endif
 }
 
 #pragma mark - MSAnalytics section.
@@ -207,10 +188,10 @@
 }
 
 #pragma mark - MSDistribute section.
-
+- (void)showConfirmationAlert {
+#if !TARGET_OS_MACCATALYST
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundeclared-selector"
-- (void)showConfirmationAlert {
   MSReleaseDetails *releaseDetails = [MSReleaseDetails new];
   releaseDetails.version = @"10";
   releaseDetails.shortVersion = @"1.0";
@@ -220,19 +201,23 @@
       [distributeInstance performSelector:@selector(showConfirmationAlert:) withObject:releaseDetails];
     }
   }
-}
 #pragma clang diagnostic pop
+#endif
+}
 
 - (void)showDistributeDisabledAlert {
+#if !TARGET_OS_MACCATALYST
   if ([MSDistribute respondsToSelector:@selector(sharedInstance)]) {
     id distributeInstance = [MSDistribute performSelector:@selector(sharedInstance)];
     if ([distributeInstance respondsToSelector:@selector(showDistributeDisabledAlert)]) {
       [distributeInstance performSelector:@selector(showDistributeDisabledAlert)];
     }
   }
+#endif
 }
 
 - (void)showCustomConfirmationAlert {
+#if !TARGET_OS_MACCATALYST
   MSReleaseDetails *releaseDetails = [MSReleaseDetails new];
   releaseDetails.version = @"10";
   releaseDetails.shortVersion = @"1.0";
@@ -240,25 +225,13 @@
     id distributeInstance = [MSDistribute performSelector:@selector(sharedInstance)];
     [[distributeInstance delegate] distribute:distributeInstance releaseAvailableWithDetails:releaseDetails];
   }
+#endif
 }
 
-#pragma mark - MSAuth section.
-
-- (void)signIn:(void (^)(MSUserInformation *_Nullable, NSError *))completionHandler {
-  [MSAuth signInWithCompletionHandler:^(MSUserInformation *_Nullable userInformation, NSError *_Nullable error) {
-    if (!error) {
-      [[NSUserDefaults standardUserDefaults] setBool:true forKey:kMSUserIdentity];
-      NSLog(@"Auth.signIn succeeded, accountId=%@", userInformation.accountId);
-    } else {
-      NSLog(@"Auth.signIn failed, error=%@", error);
-    }
-    completionHandler(userInformation, error);
-  }];
-}
-
-- (void)signOut {
-  [MSAuth signOut];
-  [[NSUserDefaults standardUserDefaults] setBool:false forKey:kMSUserIdentity];
+- (void)checkForUpdate {
+#if !TARGET_OS_MACCATALYST
+  [MSDistribute checkForUpdate];
+#endif
 }
 
 #pragma mark - Last crash report section.
@@ -349,52 +322,6 @@
 
 - (NSString *)lastCrashReportDeviceCarrierCountry {
   return [[[MSCrashes lastSessionCrashReport] device] carrierCountry];
-}
-
-// MSData section
-- (void)listDocumentsWithPartition:(NSString *)partitionName
-                      documentType:(Class)documentType
-                 completionHandler:(void (^)(MSPaginatedDocuments *))completionHandler {
-  [MSData listDocumentsWithType:documentType partition:partitionName completionHandler:completionHandler];
-}
-
-- (void)createDocumentWithPartition:(NSString *_Nonnull)partitionName
-                         documentId:(NSString *_Nonnull)documentId
-                           document:(MSDictionaryDocument *_Nonnull)document
-                       writeOptions:(MSWriteOptions *_Nonnull)writeOptions
-                  completionHandler:(void (^)(MSDocumentWrapper *))completionHandler {
-  [MSData createDocumentWithID:documentId
-                      document:document
-                     partition:partitionName
-                  writeOptions:writeOptions
-             completionHandler:completionHandler];
-}
-
-- (void)deleteDocumentWithPartition:(NSString *_Nonnull)partitionName documentId:(NSString *_Nonnull)documentId {
-  [MSData deleteDocumentWithID:documentId
-                     partition:partitionName
-             completionHandler:^(MSDocumentWrapper *_Nonnull document) {
-               NSLog(@"Data.delete document with id %@ succeeded", documentId);
-             }];
-}
-
-- (void)replaceDocumentWithPartition:(NSString *_Nonnull)partitionName
-                          documentId:(NSString *_Nonnull)documentId
-                            document:(MSDictionaryDocument *_Nonnull)document
-                        writeOptions:(MSWriteOptions *_Nonnull)writeOptions
-                   completionHandler:(void (^)(MSDocumentWrapper *))completionHandler {
-  [MSData replaceDocumentWithID:documentId
-                       document:document
-                      partition:partitionName
-                   writeOptions:writeOptions
-              completionHandler:completionHandler];
-}
-
-- (void)readDocumentWithPartition:(NSString *_Nonnull)partitionName
-                       documentId:(NSString *_Nonnull)documentId
-                     documentType:(Class)documentType
-                completionHandler:(void (^)(MSDocumentWrapper *))completionHandler {
-  [MSData readDocumentWithID:documentId documentType:documentType partition:partitionName completionHandler:completionHandler];
 }
 
 @end

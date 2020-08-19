@@ -15,6 +15,7 @@
 #import "MSMockUserDefaults.h"
 #import "MSTestFrameworks.h"
 #import "MSThread.h"
+#import "MSWrapperSdkInternal.h"
 
 static NSString *kFixture = @"fixtureName";
 static NSString *kThreadNumber = @"crashedThreadNumber";
@@ -22,51 +23,67 @@ static NSString *kFramesCount = @"crashedThreadStackFrames";
 static NSString *kBinariesCount = @"binariesCount";
 
 static NSArray *kMacOSCrashReportsParameters = @[
-  @{ kThreadNumber:@0, kFramesCount:@21,  kBinariesCount:@10, kFixture:@"macOS_report_abort" },
-  @{ kThreadNumber:@0, kFramesCount:@19,  kBinariesCount:@9,  kFixture:@"macOS_report_builtin_trap" },
-  @{ kThreadNumber:@0, kFramesCount:@30,  kBinariesCount:@11, kFixture:@"macOS_report_corrupt_malloc_internal_info" },
-  @{ kThreadNumber:@0, kFramesCount:@21,  kBinariesCount:@10, kFixture:@"macOS_report_corrupt_objc_runtime_structure" },
-  @{ kThreadNumber:@0, kFramesCount:@19,  kBinariesCount:@9,  kFixture:@"macOS_report_dereference_bad_pointer" },
-  @{ kThreadNumber:@0, kFramesCount:@19,  kBinariesCount:@9,  kFixture:@"macOS_report_dereference_null_pointer" },
-  @{ kThreadNumber:@0, kFramesCount:@21,  kBinariesCount:@9,  kFixture:@"macOS_report_dwarf_unwinding" },
-  @{ kThreadNumber:@0, kFramesCount:@19,  kBinariesCount:@9,  kFixture:@"macOS_report_execute_privileged_instruction" },
-  @{ kThreadNumber:@0, kFramesCount:@19,  kBinariesCount:@9,  kFixture:@"macOS_report_execute_undefined_instruction" },
-  @{ kThreadNumber:@0, kFramesCount:@20,  kBinariesCount:@9,  kFixture:@"macOS_report_jump_into_nx_page" },
-  @{ kThreadNumber:@0, kFramesCount:@26,  kBinariesCount:@13, kFixture:@"macOS_report_objc_access_non_object_as_object" },
-  @{ kThreadNumber:@0, kFramesCount:@20,  kBinariesCount:@12, kFixture:@"macOS_report_objc_crash_inside_msgsend" },
-  @{ kThreadNumber:@0, kFramesCount:@21,  kBinariesCount:@12, kFixture:@"macOS_report_objc_message_released_object" },
-  @{ kThreadNumber:@0, kFramesCount:@19,  kBinariesCount:@11, kFixture:@"macOS_report_overwrite_link_register" },
-  @{ kThreadNumber:@0, kFramesCount:@21,  kBinariesCount:@10, kFixture:@"macOS_report_pthread_lock" },
-  @{ kThreadNumber:@0, kFramesCount:@1,   kBinariesCount:@9,  kFixture:@"macOS_report_smash_the_bottom_of_the_stack" },
-  @{ kThreadNumber:@0, kFramesCount:@1,   kBinariesCount:@10, kFixture:@"macOS_report_smash_the_top_of_the_stack" },
-  @{ kThreadNumber:@0, kFramesCount:@512, kBinariesCount:@8,  kFixture:@"macOS_report_stack_overflow" },
-  @{ kThreadNumber:@0, kFramesCount:@19,  kBinariesCount:@9,  kFixture:@"macOS_report_swift" },
-  @{ kThreadNumber:@0, kFramesCount:@19,  kBinariesCount:@13, kFixture:@"macOS_report_throw_cpp_exception" },
-  @{ kThreadNumber:@0, kFramesCount:@19,  kBinariesCount:@9,  kFixture:@"macOS_report_write_to_readonly_page" }
+  @{kThreadNumber : @0, kFramesCount : @21, kBinariesCount : @10, kFixture : @"macOS_report_abort"},
+  @{kThreadNumber : @0, kFramesCount : @19, kBinariesCount : @9, kFixture : @"macOS_report_builtin_trap"},
+  @{kThreadNumber : @0, kFramesCount : @30, kBinariesCount : @11, kFixture : @"macOS_report_corrupt_malloc_internal_info"},
+  @{kThreadNumber : @0, kFramesCount : @21, kBinariesCount : @10, kFixture : @"macOS_report_corrupt_objc_runtime_structure"},
+  @{kThreadNumber : @0, kFramesCount : @19, kBinariesCount : @9, kFixture : @"macOS_report_dereference_bad_pointer"},
+  @{kThreadNumber : @0, kFramesCount : @19, kBinariesCount : @9, kFixture : @"macOS_report_dereference_null_pointer"},
+  @{kThreadNumber : @0, kFramesCount : @21, kBinariesCount : @9, kFixture : @"macOS_report_dwarf_unwinding"},
+  @{kThreadNumber : @0, kFramesCount : @19, kBinariesCount : @9, kFixture : @"macOS_report_execute_privileged_instruction"},
+  @{kThreadNumber : @0, kFramesCount : @19, kBinariesCount : @9, kFixture : @"macOS_report_execute_undefined_instruction"},
+  @{kThreadNumber : @0, kFramesCount : @20, kBinariesCount : @9, kFixture : @"macOS_report_jump_into_nx_page"},
+  @{kThreadNumber : @0, kFramesCount : @26, kBinariesCount : @13, kFixture : @"macOS_report_objc_access_non_object_as_object"},
+  @{kThreadNumber : @0, kFramesCount : @20, kBinariesCount : @12, kFixture : @"macOS_report_objc_crash_inside_msgsend"},
+  @{kThreadNumber : @0, kFramesCount : @21, kBinariesCount : @12, kFixture : @"macOS_report_objc_message_released_object"},
+  @{kThreadNumber : @0, kFramesCount : @19, kBinariesCount : @11, kFixture : @"macOS_report_overwrite_link_register"},
+  @{kThreadNumber : @0, kFramesCount : @21, kBinariesCount : @10, kFixture : @"macOS_report_pthread_lock"},
+  @{kThreadNumber : @0, kFramesCount : @1, kBinariesCount : @9, kFixture : @"macOS_report_smash_the_bottom_of_the_stack"},
+  @{kThreadNumber : @0, kFramesCount : @1, kBinariesCount : @10, kFixture : @"macOS_report_smash_the_top_of_the_stack"},
+  @{kThreadNumber : @0, kFramesCount : @512, kBinariesCount : @8, kFixture : @"macOS_report_stack_overflow"},
+  @{kThreadNumber : @0, kFramesCount : @19, kBinariesCount : @9, kFixture : @"macOS_report_swift"},
+  @{kThreadNumber : @0, kFramesCount : @19, kBinariesCount : @13, kFixture : @"macOS_report_throw_cpp_exception"},
+  @{kThreadNumber : @0, kFramesCount : @19, kBinariesCount : @9, kFixture : @"macOS_report_write_to_readonly_page"}
 ];
 
 @interface MSErrorLogFormatter ()
 
-+ (NSString *)selectorForRegisterWithName:(NSString *)regName ofThread:(MSPLCrashReportThreadInfo *)thread report:(MSPLCrashReport *)report;
++ (NSString *)selectorForRegisterWithName:(NSString *)regName ofThread:(PLCrashReportThreadInfo *)thread report:(PLCrashReport *)report;
 
 @end
 
 @interface MSErrorLogFormatterTests : XCTestCase
 
+@property(nonatomic) id deviceMock;
+@property(nonatomic) id deviceTrackerMock;
+
 @end
 
 @implementation MSErrorLogFormatterTests
+
+- (void)setUp {
+  [MSDeviceTracker resetSharedInstance];
+  self.deviceMock = OCMPartialMock([MSDevice new]);
+  OCMStub([self.deviceMock isValid]).andReturn(YES);
+  self.deviceTrackerMock = OCMClassMock([MSDeviceTracker class]);
+  OCMStub([self.deviceTrackerMock sharedInstance]).andReturn(self.deviceTrackerMock);
+  OCMStub([self.deviceTrackerMock device]).andReturn(self.deviceMock);
+  OCMStub([self.deviceTrackerMock deviceForTimestamp:OCMOCK_ANY]).andReturn(self.deviceMock);
+}
+
+- (void)tearDown {
+  [self.deviceMock stopMocking];
+  [self.deviceTrackerMock stopMocking];
+  [MSDeviceTracker resetSharedInstance];
+}
 
 - (void)testCreateErrorReport {
   NSData *crashData = [MSCrashesTestUtil dataOfFixtureCrashReportWithFileName:@"live_report_signal"];
   XCTAssertNotNil(crashData);
 
   MSMockUserDefaults *defaults = [MSMockUserDefaults new];
-  MSDevice *device = [MSDeviceTracker sharedInstance].device;
-  XCTAssertNotNil(device);
-
   NSError *error = nil;
-  MSPLCrashReport *crashReport = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
+  PLCrashReport *crashReport = [[PLCrashReport alloc] initWithData:crashData error:&error];
 
   MSErrorReport *errorReport = [MSErrorLogFormatter errorReportFromCrashReport:crashReport];
   XCTAssertNotNil(errorReport);
@@ -80,14 +97,14 @@ static NSArray *kMacOSCrashReportsParameters = @[
   XCTAssertEqual([errorReport.appErrorTime timeIntervalSince1970], [crashReport.systemInfo.timestamp timeIntervalSince1970] + 0.999);
   assertThat(errorReport.appStartTime, equalTo(crashReport.processInfo.processStartTime));
 
-  XCTAssertEqualObjects(errorReport.device, device);
+  XCTAssertEqualObjects(errorReport.device, self.deviceMock);
   XCTAssertEqual(errorReport.appProcessIdentifier, crashReport.processInfo.processID);
 
   crashData = [MSCrashesTestUtil dataOfFixtureCrashReportWithFileName:@"live_report_exception"];
   XCTAssertNotNil(crashData);
   error = nil;
 
-  crashReport = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
+  crashReport = [[PLCrashReport alloc] initWithData:crashData error:&error];
   errorReport = [MSErrorLogFormatter errorReportFromCrashReport:crashReport];
   XCTAssertNotNil(errorReport);
   XCTAssertNotNil(errorReport.incidentIdentifier);
@@ -99,7 +116,7 @@ static NSArray *kMacOSCrashReportsParameters = @[
   // FIXME: PLCrashReporter doesn't support millisecond precision, here is a workaround to fill 999 for its millisecond.
   XCTAssertEqual([errorReport.appErrorTime timeIntervalSince1970], [crashReport.systemInfo.timestamp timeIntervalSince1970] + 0.999);
   assertThat(errorReport.appStartTime, equalTo(crashReport.processInfo.processStartTime));
-  XCTAssertEqualObjects(errorReport.device, device);
+  XCTAssertEqualObjects(errorReport.device, self.deviceMock);
   XCTAssertEqual(errorReport.appProcessIdentifier, crashReport.processInfo.processID);
   [defaults stopMocking];
 }
@@ -109,7 +126,7 @@ static NSArray *kMacOSCrashReportsParameters = @[
   XCTAssertNotNil(crashData);
 
   NSError *error = nil;
-  MSPLCrashReport *report = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
+  PLCrashReport *report = [[PLCrashReport alloc] initWithData:crashData error:&error];
 
   NSString *expected = (__bridge NSString *)CFUUIDCreateString(NULL, report.uuidRef);
   NSString *actual = [MSErrorLogFormatter errorIdForCrashReport:report];
@@ -117,6 +134,7 @@ static NSArray *kMacOSCrashReportsParameters = @[
 }
 
 - (void)testCrashProbeReports {
+
   // Crash with _pthread_list_lock held
   [self assertIsCrashProbeReportValidConverted:@"live_report_pthread_lock"];
 
@@ -173,11 +191,11 @@ static NSArray *kMacOSCrashReportsParameters = @[
   NSData *crashData = [MSCrashesTestUtil dataOfFixtureCrashReportWithFileName:@"live_report_exception"];
   XCTAssertNotNil(crashData);
   NSError *error = nil;
-  MSPLCrashReport *report = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
-  MSPLCrashReportExceptionInfo *plExceptionInfo = report.exceptionInfo;
+  PLCrashReport *report = [[PLCrashReport alloc] initWithData:crashData error:&error];
+  PLCrashReportExceptionInfo *plExceptionInfo = report.exceptionInfo;
   MSAppleErrorLog *errorLog = [MSErrorLogFormatter errorLogFromCrashReport:report];
 
-  MSPLCrashReportThreadInfo *crashedThread = [MSErrorLogFormatter findCrashedThreadInReport:report];
+  PLCrashReportThreadInfo *crashedThread = [MSErrorLogFormatter findCrashedThreadInReport:report];
 
   for (MSThread *thread in errorLog.threads) {
     if ([thread.threadId isEqualToNumber:@(crashedThread.threadNumber)]) {
@@ -199,9 +217,9 @@ static NSArray *kMacOSCrashReportsParameters = @[
 
   // When
   NSError *error = nil;
-  MSPLCrashReport *report = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
-  MSPLCrashReportThreadInfo *crashedThread = [MSErrorLogFormatter findCrashedThreadInReport:report];
-  MSPLCrashReportRegisterInfo *reg = crashedThread.registers[0];
+  PLCrashReport *report = [[PLCrashReport alloc] initWithData:crashData error:&error];
+  PLCrashReportThreadInfo *crashedThread = [MSErrorLogFormatter findCrashedThreadInReport:report];
+  PLCrashReportRegisterInfo *reg = crashedThread.registers[0];
   [MSErrorLogFormatter selectorForRegisterWithName:reg.registerName ofThread:crashedThread report:report];
 
   // Selector may not be found here, but we are sure that its operation will not lead to an application crash
@@ -216,7 +234,7 @@ static NSArray *kMacOSCrashReportsParameters = @[
 
   // When
   NSError *error = nil;
-  MSPLCrashReport *report = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
+  PLCrashReport *report = [[PLCrashReport alloc] initWithData:crashData error:&error];
   MSAppleErrorLog *actual = [MSAppleErrorLog new];
   actual = [MSErrorLogFormatter addProcessInfoAndApplicationPathTo:actual fromCrashReport:report];
 
@@ -242,11 +260,8 @@ static NSArray *kMacOSCrashReportsParameters = @[
   NSData *crashData = [MSCrashesTestUtil dataOfFixtureCrashReportWithFileName:@"live_report_exception"];
   XCTAssertNotNil(crashData);
 
-  MSDevice *device = [MSDeviceTracker sharedInstance].device;
-  XCTAssertNotNil(device);
-
   NSError *error = nil;
-  MSPLCrashReport *crashReport = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
+  PLCrashReport *crashReport = [[PLCrashReport alloc] initWithData:crashData error:&error];
 
   MSAppleErrorLog *errorLog = [MSErrorLogFormatter errorLogFromCrashReport:crashReport];
 
@@ -428,14 +443,44 @@ static NSArray *kMacOSCrashReportsParameters = @[
   XCTAssertEqual(imageType, MSBinaryImageTypeOther, @"Test other image %@ with process %@", imagePath, processPath);
 }
 
+- (void)testErrorLogFromCrashReportWithWrapper {
+
+  // If
+  MSMockUserDefaults *defaults = [MSMockUserDefaults new];
+
+  // When
+  NSData *crashData = [MSCrashesTestUtil dataOfFixtureCrashReportWithFileName:@"live_report_exception"];
+
+  // Then
+  XCTAssertNotNil(crashData);
+
+  // If
+  NSError *error = nil;
+  PLCrashReport *report = [[PLCrashReport alloc] initWithData:crashData error:&error];
+  MSDevice *device = self.deviceMock;
+  device.wrapperSdkVersion = @"10.11.12";
+  device.wrapperSdkName = @"Wrapper SDK for iOS";
+  device.wrapperRuntimeVersion = @"13.14";
+  device.liveUpdateReleaseLabel = @"Release Label";
+  device.liveUpdateDeploymentKey = @"Deployment Key";
+  device.liveUpdatePackageHash = @"Package Hash";
+
+  // When
+  MSAppleErrorLog *errorLog = [MSErrorLogFormatter errorLogFromCrashReport:report];
+
+  // Then
+  XCTAssertEqualObjects(errorLog.device.wrapperSdkName, @"Wrapper SDK for iOS");
+  [defaults stopMocking];
+}
+
 - (void)assertIsCrashProbeReportValidConverted:(NSString *)filename {
   NSData *crashData = [MSCrashesTestUtil dataOfFixtureCrashReportWithFileName:filename];
   XCTAssertNotNil(crashData);
 
   NSError *error = nil;
-  MSPLCrashReport *crashReport = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
+  PLCrashReport *crashReport = [[PLCrashReport alloc] initWithData:crashData error:&error];
   XCTAssertNotNil(crashReport);
-  MSPLCrashReportThreadInfo *crashedThread = [MSErrorLogFormatter findCrashedThreadInReport:crashReport];
+  PLCrashReportThreadInfo *crashedThread = [MSErrorLogFormatter findCrashedThreadInReport:crashReport];
   XCTAssertNotNil(crashedThread);
   MSAppleErrorLog *errorLog = [MSErrorLogFormatter errorLogFromCrashReport:crashReport];
   XCTAssertNotNil(errorLog);
@@ -454,10 +499,12 @@ static NSArray *kMacOSCrashReportsParameters = @[
   assertThat(errorLog.appLaunchTimestamp, equalTo(crashReport.processInfo.processStartTime));
 
   NSArray *images = crashReport.images;
-  for (MSPLCrashReportBinaryImageInfo *image in images) {
+  for (PLCrashReportBinaryImageInfo *image in images) {
     if (image.codeType != nil && image.codeType.typeEncoding == PLCrashReportProcessorTypeEncodingMach) {
-      assertThat(errorLog.primaryArchitectureId, equalTo(@(image.codeType.type)));
-      assertThat(errorLog.architectureVariantId, equalTo(@(image.codeType.subtype)));
+      XCTAssertEqual(errorLog.primaryArchitectureId.unsignedLongLongValue, image.codeType.type, @"Report: %@, Image: %@", filename,
+                     [image.imageName lastPathComponent]);
+      XCTAssertEqual(errorLog.architectureVariantId.unsignedLongLongValue, image.codeType.subtype, @"Report: %@, Image: %@", filename,
+                     [image.imageName lastPathComponent]);
     }
   }
 
@@ -483,7 +530,7 @@ static NSArray *kMacOSCrashReportsParameters = @[
   assertThat(errorLog.threads, hasCountOf([crashReport.threads count]));
   for (NSUInteger i = 0; i < [errorLog.threads count]; i++) {
     MSThread *thread = errorLog.threads[i];
-    MSPLCrashReportThreadInfo *plThread = crashReport.threads[i];
+    PLCrashReportThreadInfo *plThread = crashReport.threads[i];
 
     assertThat(thread.threadId, equalTo(@(plThread.threadNumber)));
     if (crashReport.hasExceptionInfo && [thread.threadId isEqualToNumber:@(crashedThread.threadNumber)]) {
@@ -495,96 +542,59 @@ static NSArray *kMacOSCrashReportsParameters = @[
   assertThat(errorLog.registers, hasCountOf([crashedThread.registers count]));
 }
 
-#if !TARGET_OS_OSX
-- (void)testNormalize32BitAddress {
+- (void)testFormat32BitAddress {
 
   // If
   uint64_t address32Bit = 0x123456789;
 
   // When
   NSString *actual = [MSErrorLogFormatter formatAddress:address32Bit is64bit:NO];
-  NSString *expected = [NSString stringWithFormat:@"0x%0*" PRIx64, 8 << NO, address32Bit];
+  NSString *expected = [NSString stringWithFormat:@"0x%0*" PRIx64, 8, address32Bit];
 
   // Then
   XCTAssertEqualObjects(expected, actual);
 }
-#endif
 
-#if !TARGET_OS_OSX
-- (void)testNormalize64BitAddress {
-
-  // If
-  uint64_t address64Bit = 0x1234567890abcdef;
-  uint64_t normalizedAddress = 0x0000000890abcdef;
-
-  // When
-  NSString *actual = [MSErrorLogFormatter formatAddress:address64Bit is64bit:YES];
-  NSString *expected = [NSString stringWithFormat:@"0x%0*" PRIx64, 8 << YES, normalizedAddress];
-
-  // Then
-  XCTAssertEqualObjects(expected, actual);
-}
-#endif
-
-#if TARGET_OS_OSX
-- (void)testNormalize32BitAddressOnMacOs {
-
-  // If
-  uint64_t address32Bit = 0x123456789;
-
-  // When
-  NSString *actual = [MSErrorLogFormatter formatAddress:address32Bit is64bit:NO];
-  NSString *expected = [NSString stringWithFormat:@"0x%0*" PRIx64, 8 << NO, address32Bit];
-
-  // Then
-  XCTAssertEqualObjects(expected, actual);
-}
-#endif
-
-#if TARGET_OS_OSX
-- (void)testNormalize64BitAddressMacOs {
+- (void)testFormat64BitAddress {
 
   // If
   uint64_t address64Bit = 0x1234567890abcdef;
 
   // When
   NSString *actual = [MSErrorLogFormatter formatAddress:address64Bit is64bit:YES];
-  NSString *expected = [NSString stringWithFormat:@"0x%0*" PRIx64, 8 << YES, address64Bit];
+  NSString *expected = [NSString stringWithFormat:@"0x%0*" PRIx64, 16, address64Bit];
 
   // Then
   XCTAssertEqualObjects(expected, actual);
 }
-#endif
 
-#if !TARGET_OS_OSX
 - (void)testBinaryImageCountFromReportIsCorrect {
 
   // If
   NSData *crashData = [MSCrashesTestUtil dataOfFixtureCrashReportWithFileName:@"live_report_arm64e"];
   NSError *error = nil;
-  MSPLCrashReport *crashReport = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
-  NSUInteger expectedCount = 14;
+  PLCrashReport *crashReport = [[PLCrashReport alloc] initWithData:crashData error:&error];
+  NSUInteger expectedCount = 16;
 
   // When
-  NSArray *binaryImages = [MSErrorLogFormatter extractBinaryImagesFromReport:crashReport codeType:@(CPU_TYPE_ARM64) is64bit:YES];
+  NSArray *binaryImages = [MSErrorLogFormatter extractBinaryImagesFromReport:crashReport is64bit:YES];
 
   // Then
   XCTAssertEqual(expectedCount, binaryImages.count);
 }
-#endif
 
-#if TARGET_OS_OSX
+#if TARGET_OS_OSX && !TARGET_OS_MACCATALYST
 - (void)testCrashReportsParametersFromMacOSReport {
   for (unsigned long i = 0; i < kMacOSCrashReportsParameters.count; i++) {
 
     // If
     NSData *crashData = [MSCrashesTestUtil dataOfFixtureCrashReportWithFileName:kMacOSCrashReportsParameters[i][kFixture]];
     NSError *error = nil;
-    MSPLCrashReport *crashReport = [[MSPLCrashReport alloc] initWithData:crashData error:&error];
+    PLCrashReport *crashReport = [[PLCrashReport alloc] initWithData:crashData error:&error];
 
     // When
-    NSArray *binaryImages = [MSErrorLogFormatter extractBinaryImagesFromReport:crashReport codeType:@(CPU_TYPE_ARM64) is64bit:YES];
-    MSPLCrashReportThreadInfo *crashedThread = [MSErrorLogFormatter findCrashedThreadInReport:crashReport];
+    NSArray *binaryImages = [MSErrorLogFormatter extractBinaryImagesFromReport:crashReport is64bit:YES];
+    PLCrashReportThreadInfo *crashedThread = [MSErrorLogFormatter findCrashedThreadInReport:crashReport];
 
     // Then
     int expectedBinariesCount = [kMacOSCrashReportsParameters[i][kBinariesCount] intValue];

@@ -46,8 +46,13 @@ __attribute__((used)) static void importCategories() { [NSString stringWithForma
 #pragma mark - Service initialization
 
 - (instancetype)init {
-  if ((self = [super init])) {
 
+  [MS_APP_CENTER_USER_DEFAULTS migrateKeys:@{
+    @"MSAppCenterAnalyticsIsEnabled" : MSPrefixKeyFrom(@"kMSAnalyticsIsEnabledKey"), // [MSAnalytics isEnabled]
+    @"MSAppCenterPastSessions" : @"pastSessionsKey"                                  // [MSSessionTracker init]
+  }
+                                forService:kMSServiceName];
+  if ((self = [super init])) {
     // Set defaults.
     _autoPageTrackingEnabled = NO;
     _flushInterval = kMSFlushIntervalDefault;
@@ -461,7 +466,10 @@ __attribute__((used)) static void importCategories() { [NSString stringWithForma
 
 + (void)resetSharedInstance {
 
-  // resets the once_token so dispatch_once will run again.
+  // Clean existing instance by stopping session tracker, it'll remove its observers.
+  [sharedInstance.sessionTracker stop];
+
+  // Resets the once_token so dispatch_once will run again.
   onceToken = 0;
   sharedInstance = nil;
 }

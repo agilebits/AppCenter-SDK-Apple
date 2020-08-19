@@ -9,7 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Key for a low memory warning in the last session.
  */
-static NSString *const kMSAppDidReceiveMemoryWarningKey = @"MSAppDidReceiveMemoryWarning";
+static NSString *const kMSAppDidReceiveMemoryWarningKey = @"AppDidReceiveMemoryWarning";
 
 @class MSException;
 @class MSErrorAttachmentLog;
@@ -43,7 +43,7 @@ static NSString *const kMSAppDidReceiveMemoryWarningKey = @"MSAppDidReceiveMemor
  * @param errorAttachments An array of error attachments that should be sent.
  * @param incidentIdentifier The identifier of the error report that the attachments will be associated with.
  */
-- (void)sendErrorAttachments:(NSArray<MSErrorAttachmentLog *> *)errorAttachments withIncidentIdentifier:(NSString *)incidentIdentifier;
+- (void)sendErrorAttachments:(nullable NSArray<MSErrorAttachmentLog *> *)errorAttachments withIncidentIdentifier:(NSString *)incidentIdentifier;
 
 /**
  * Configure PLCrashreporter.
@@ -71,7 +71,7 @@ static NSString *const kMSAppDidReceiveMemoryWarningKey = @"MSAppDidReceiveMemor
  *
  * @return handled error ID.
  */
-- (NSString *)trackModelException:(MSException *)exception
+- (nullable NSString *)trackModelException:(MSException *)exception
                    withProperties:(nullable NSDictionary<NSString *, NSString *> *)properties
                   withAttachments:(nullable NSArray<MSErrorAttachmentLog *> *)attachments;
 
