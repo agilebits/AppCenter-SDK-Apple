@@ -3,7 +3,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "MSAbstractLog.h"
+#import <AppCenter/MSAbstractLog.h>
 
 /**
  * Error attachment log.

@@ -6,7 +6,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "MSWrapperSdk.h"
+#import <AppCenter/MSWrapperSdk.h>
 
 @interface MSDevice : MSWrapperSdk
 

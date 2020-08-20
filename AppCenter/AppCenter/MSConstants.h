@@ -3,6 +3,8 @@
 
 #import <Foundation/Foundation.h>
 
+#ifndef MSCONSTANTS
+#define MSCONSTANTS
 /**
  *  Log Levels
  */
@@ -168,3 +170,5 @@ typedef NS_ENUM(NSInteger, MSHTTPCodesNo) {
   MSHTTPCodesNo598NetworkReadTimeoutErrorUnknown = 598,
   MSHTTPCodesNo599NetworkConnectTimeoutErrorUnknown = 599
 };
+#endif
+
