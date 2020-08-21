@@ -6,7 +6,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "MSChannelProtocol.h"
+#import <AppCenter/MSChannelProtocol.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

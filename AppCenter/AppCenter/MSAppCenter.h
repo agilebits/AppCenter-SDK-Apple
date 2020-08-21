@@ -3,7 +3,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "MSConstants.h"
+#import <AppCenter/MSConstants.h>
 
 @class MSWrapperSdk;
 

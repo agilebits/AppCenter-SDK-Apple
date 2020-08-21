@@ -6,7 +6,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "MSEnable.h"
+#import <AppCenter/MSEnable.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

@@ -3,9 +3,9 @@
 
 #import <Foundation/Foundation.h>
 
-#import "MSCrashHandlerSetupDelegate.h"
-#import "MSCrashes.h"
-#import "MSCrashesDelegate.h"
-#import "MSErrorAttachmentLog+Utility.h"
-#import "MSErrorAttachmentLog.h"
-#import "MSWrapperCrashesHelper.h"
+#import <AppCenterCrashes/MSCrashHandlerSetupDelegate.h>
+#import <AppCenterCrashes/MSCrashes.h>
+#import <AppCenterCrashes/MSCrashesDelegate.h>
+#import <AppCenterCrashes/MSErrorAttachmentLog+Utility.h>
+#import <AppCenterCrashes/MSErrorAttachmentLog.h>
+#import <AppCenterCrashes/MSWrapperCrashesHelper.h>

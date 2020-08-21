@@ -6,7 +6,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "MSAbstractLog.h"
+#import <AppCenter/MSAbstractLog.h>
 
 @interface MSLogWithProperties : MSAbstractLog
 

@@ -253,9 +253,6 @@
 		C9EBA969230D35A700A20F0F /* MSAbstractLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81331E8C565E001C76C9 /* MSAbstractLog.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C9EBA96A230D35A700A20F0F /* MSService.h in Headers */ = {isa = PBXBuildFile; fileRef = 04A082011F74BB6100DC776D /* MSService.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C9EBA96B230D35A700A20F0F /* MSServiceAbstract.h in Headers */ = {isa = PBXBuildFile; fileRef = 387C77061D6CC41100D68CC1 /* MSServiceAbstract.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA96C230D35A800A20F0F /* MSAbstractLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81331E8C565E001C76C9 /* MSAbstractLog.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA96D230D35A800A20F0F /* MSService.h in Headers */ = {isa = PBXBuildFile; fileRef = 04A082011F74BB6100DC776D /* MSService.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA96E230D35A800A20F0F /* MSServiceAbstract.h in Headers */ = {isa = PBXBuildFile; fileRef = 387C77061D6CC41100D68CC1 /* MSServiceAbstract.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C9EBA96F230D35BC00A20F0F /* MSLogWithProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81311E8C540E001C76C9 /* MSLogWithProperties.h */; };
 		C9EBA970230D35BC00A20F0F /* MSLogWithProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81311E8C540E001C76C9 /* MSLogWithProperties.h */; };
 		C9EBA971230D35BD00A20F0F /* MSLogWithProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81311E8C540E001C76C9 /* MSLogWithProperties.h */; };
@@ -1542,8 +1539,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C9EBA96E230D35A800A20F0F /* MSServiceAbstract.h in Headers */,
-				C9EBA96D230D35A800A20F0F /* MSService.h in Headers */,
 				C9EBA99D230D35FE00A20F0F /* MSAbstractErrorLog.h in Headers */,
 				C9EBA982230D35DD00A20F0F /* MSWrapperCrashesHelper.h in Headers */,
 				C9EBA9A1230D35FE00A20F0F /* MSThread.h in Headers */,
@@ -1571,7 +1566,6 @@
 				C9EBA9DC230D362A00A20F0F /* MSErrorAttachmentLog.h in Headers */,
 				C9EBA998230D35FE00A20F0F /* MSWrapperException.h in Headers */,
 				C9EBA9CD230D361800A20F0F /* MSCrashesUtil.h in Headers */,
-				C9EBA96C230D35A800A20F0F /* MSAbstractLog.h in Headers */,
 				C9EBA999230D35FE00A20F0F /* MSWrapperExceptionInternal.h in Headers */,
 				C9EBA9CE230D361800A20F0F /* MSCrashReporter.h in Headers */,
 				C9EBA981230D35DD00A20F0F /* MSCrashHandlerSetupDelegate.h in Headers */,

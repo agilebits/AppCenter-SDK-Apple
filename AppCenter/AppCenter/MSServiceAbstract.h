@@ -6,7 +6,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "MSService.h"
+#import <AppCenter/MSService.h>
 
 @protocol MSChannelGroupProtocol;
 

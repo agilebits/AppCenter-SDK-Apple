@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #import "MSService.h"
-#import "MSServiceAbstract.h"
+#import <AppCenter/MSServiceAbstract.h>
 #import "MSServiceCommon.h"
 #import "MSServiceInternal.h"
 

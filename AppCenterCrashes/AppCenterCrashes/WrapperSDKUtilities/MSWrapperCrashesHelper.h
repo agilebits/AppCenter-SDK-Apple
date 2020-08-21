@@ -3,7 +3,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "MSCrashHandlerSetupDelegate.h"
+#import <AppCenterCrashes/MSCrashHandlerSetupDelegate.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
