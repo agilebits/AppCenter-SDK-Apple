@@ -3,6 +3,7 @@
 
 #import "MSACException.h"
 #import "MSACStackFrame.h"
+#import "MSACAbstractLogInternal.h"
 
 static NSString *const kMSACExceptionType = @"type";
 static NSString *const kMSACMessage = @"message";

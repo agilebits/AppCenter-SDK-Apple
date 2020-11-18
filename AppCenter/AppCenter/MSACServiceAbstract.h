@@ -6,7 +6,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import <AppCenter/MSService.h>
+#import <AppCenter/MSACService.h>
 
 @protocol MSACChannelGroupProtocol;
 

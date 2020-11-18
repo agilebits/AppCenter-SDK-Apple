@@ -3,8 +3,6 @@
 
 #import <Foundation/Foundation.h>
 
-#import <AppCenter/MSConstants.h>
-
 @class MSACWrapperSdk;
 
 #if !TARGET_OS_TV

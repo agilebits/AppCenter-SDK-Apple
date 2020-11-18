@@ -3,7 +3,6 @@
 
 #import <Foundation/Foundation.h>
 
-#import "AppCenter+Internal.h"
 #import "MSACLogWithProperties.h"
 
 @class MSACErrorAttachment;

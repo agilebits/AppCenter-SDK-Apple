@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#import <AppCenterCrashes/MSErrorReport.h>
-#import <AppCenter/MSServiceAbstract.h>
+#import <AppCenterCrashes/MSACErrorReport.h>
+#import <AppCenter/MSACServiceAbstract.h>
 
 @class MSACCrashesDelegate;
 

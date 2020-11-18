@@ -3,6 +3,7 @@
 
 #import "MSACHandledErrorLog.h"
 #import "MSACException.h"
+#import "AppCenter+Internal.h"
 
 static NSString *const kMSACTypeError = @"handledError";
 static NSString *const kMSACId = @"id";

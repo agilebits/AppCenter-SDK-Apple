@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#import "MSService.h"
-#import <AppCenter/MSServiceAbstract.h>
-#import "MSServiceCommon.h"
-#import "MSServiceInternal.h"
+#import "MSACService.h"
+#import <AppCenter/MSACServiceAbstract.h>
+#import "MSACServiceCommon.h"
+#import "MSACServiceInternal.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

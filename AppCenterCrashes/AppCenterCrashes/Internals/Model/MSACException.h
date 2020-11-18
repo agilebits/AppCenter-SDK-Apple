@@ -3,7 +3,6 @@
 
 #import <Foundation/Foundation.h>
 
-#import "AppCenter+Internal.h"
 #import "MSACSerializableObject.h"
 
 @class MSACStackFrame;
