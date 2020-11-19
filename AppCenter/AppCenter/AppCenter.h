@@ -3,19 +3,19 @@
 
 #import <Foundation/Foundation.h>
 
-#import <AppCenter/MSAbstractLog.h>
-#import <AppCenter/MSAppCenter.h>
-#import <AppCenter/MSAppCenterErrors.h>
-#import <AppCenter/MSChannelGroupProtocol.h>
-#import <AppCenter/MSChannelProtocol.h>
-#import <AppCenter/MSConstants.h>
-#import <AppCenter/MSCustomProperties.h>
-#import <AppCenter/MSDevice.h>
+#import <AppCenter/MSACServiceAbstract.h>
+#import <AppCenter/MSACAppCenter.h>
+#import <AppCenter/MSACAppCenterErrors.h>
+#import <AppCenter/MSACChannelGroupProtocol.h>
+#import <AppCenter/MSACChannelProtocol.h>
+#import <AppCenter/MSACConstants.h>
+#import <AppCenter/MSACCustomProperties.h>
+#import <AppCenter/MSACDevice.h>
 #import <AppCenter/MSACEnable.h>
-#import <AppCenter/MSLog.h>
-#import <AppCenter/MSLogWithProperties.h>
-#import <AppCenter/MSLogger.h>
+#import <AppCenter/MSACLog.h>
+#import <AppCenter/MSACLogWithProperties.h>
+#import <AppCenter/MSACLogger.h>
 #import <AppCenter/MSACService.h>
 #import <AppCenter/MSACServiceAbstract.h>
-#import <AppCenter/MSWrapperLogger.h>
-#import <AppCenter/MSWrapperSdk.h>
+#import <AppCenter/MSACWrapperLogger.h>
+#import <AppCenter/MSACWrapperSdk.h>
