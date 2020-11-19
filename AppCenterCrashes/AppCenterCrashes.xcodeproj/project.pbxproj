@@ -248,15 +248,6 @@
 		C2FE827F23757CB7007DCD28 /* MSACApplicationForwarder.m in Sources */ = {isa = PBXBuildFile; fileRef = C2FE827B23757CB7007DCD28 /* MSACApplicationForwarder.m */; };
 		C2FE828023757CB7007DCD28 /* MSACApplicationForwarder.m in Sources */ = {isa = PBXBuildFile; fileRef = C2FE827B23757CB7007DCD28 /* MSACApplicationForwarder.m */; };
 		C2FE828123757CB7007DCD28 /* MSACApplicationForwarder.m in Sources */ = {isa = PBXBuildFile; fileRef = C2FE827B23757CB7007DCD28 /* MSACApplicationForwarder.m */; };
-		C9EBA966230D35A700A20F0F /* MSACAbstractLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81331E8C565E001C76C9 /* MSACAbstractLog.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA967230D35A700A20F0F /* MSACService.h in Headers */ = {isa = PBXBuildFile; fileRef = 04A082011F74BB6100DC776D /* MSACService.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA968230D35A700A20F0F /* MSACServiceAbstract.h in Headers */ = {isa = PBXBuildFile; fileRef = 387C77061D6CC41100D68CC1 /* MSACServiceAbstract.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA969230D35A700A20F0F /* MSACAbstractLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81331E8C565E001C76C9 /* MSACAbstractLog.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA96A230D35A700A20F0F /* MSACService.h in Headers */ = {isa = PBXBuildFile; fileRef = 04A082011F74BB6100DC776D /* MSACService.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA96B230D35A700A20F0F /* MSACServiceAbstract.h in Headers */ = {isa = PBXBuildFile; fileRef = 387C77061D6CC41100D68CC1 /* MSACServiceAbstract.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA96C230D35A800A20F0F /* MSACAbstractLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81331E8C565E001C76C9 /* MSACAbstractLog.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA96D230D35A800A20F0F /* MSACService.h in Headers */ = {isa = PBXBuildFile; fileRef = 04A082011F74BB6100DC776D /* MSACService.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		C9EBA96E230D35A800A20F0F /* MSACServiceAbstract.h in Headers */ = {isa = PBXBuildFile; fileRef = 387C77061D6CC41100D68CC1 /* MSACServiceAbstract.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C9EBA96F230D35BC00A20F0F /* MSACLogWithProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81311E8C540E001C76C9 /* MSACLogWithProperties.h */; };
 		C9EBA970230D35BC00A20F0F /* MSACLogWithProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81311E8C540E001C76C9 /* MSACLogWithProperties.h */; };
 		C9EBA971230D35BD00A20F0F /* MSACLogWithProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 380B81311E8C540E001C76C9 /* MSACLogWithProperties.h */; };
@@ -451,6 +442,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = C9A91F5D230BFDB70068070D;
 			remoteInfo = "AppCenterCrashes macOS Framework";
+		};
+		937D4B022566CD1C00F0A143 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 939CA84624A4032A00CC44F8 /* AppCenter.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C9A91FB6230C01140068070D;
+			remoteInfo = "AppCenter iOS Framework";
 		};
 		939CA85824A4032A00CC44F8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -1280,7 +1278,7 @@
 		939CA84724A4032A00CC44F8 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				939CA85724A4032A00CC44F8 /* AppCenter.framework */,
+				937D4B032566CD1C00F0A143 /* AppCenter.framework */,
 				939CA85924A4032A00CC44F8 /* AppCenter.xctest */,
 				939CA85B24A4032A00CC44F8 /* AppCenter.framework */,
 				939CA85D24A4032A00CC44F8 /* AppCenter.xctest */,
@@ -1435,8 +1433,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C9EBA968230D35A700A20F0F /* MSACServiceAbstract.h in Headers */,
-				C9EBA967230D35A700A20F0F /* MSACService.h in Headers */,
 				C9EBA9B1230D35FF00A20F0F /* MSACAbstractErrorLog.h in Headers */,
 				C9EBA97C230D35DB00A20F0F /* MSACWrapperCrashesHelper.h in Headers */,
 				C9EBA9B5230D35FF00A20F0F /* MSACThread.h in Headers */,
@@ -1464,7 +1460,6 @@
 				C9EBA9D6230D362900A20F0F /* MSACErrorAttachmentLog.h in Headers */,
 				C9EBA9AC230D35FF00A20F0F /* MSACWrapperException.h in Headers */,
 				C9EBA9C4230D361600A20F0F /* MSACCrashesUtil.h in Headers */,
-				C9EBA966230D35A700A20F0F /* MSACAbstractLog.h in Headers */,
 				C9EBA9AD230D35FF00A20F0F /* MSACWrapperExceptionInternal.h in Headers */,
 				C9EBA9C5230D361600A20F0F /* MSACCrashReporter.h in Headers */,
 				C9EBA97B230D35DB00A20F0F /* MSACCrashHandlerSetupDelegate.h in Headers */,
@@ -1478,8 +1473,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C9EBA96B230D35A700A20F0F /* MSACServiceAbstract.h in Headers */,
-				C9EBA96A230D35A700A20F0F /* MSACService.h in Headers */,
 				C9EBA9BB230D360000A20F0F /* MSACAbstractErrorLog.h in Headers */,
 				C9EBA980230D35DD00A20F0F /* MSACWrapperCrashesHelper.h in Headers */,
 				C9EBA9BF230D360000A20F0F /* MSACThread.h in Headers */,
@@ -1507,7 +1500,6 @@
 				C9EBA9D9230D362A00A20F0F /* MSACErrorAttachmentLog.h in Headers */,
 				C9EBA9B6230D360000A20F0F /* MSACWrapperException.h in Headers */,
 				C9EBA9CA230D361700A20F0F /* MSACCrashesUtil.h in Headers */,
-				C9EBA969230D35A700A20F0F /* MSACAbstractLog.h in Headers */,
 				C9EBA9B7230D360000A20F0F /* MSACWrapperExceptionInternal.h in Headers */,
 				C9EBA9CB230D361700A20F0F /* MSACCrashReporter.h in Headers */,
 				C9EBA97F230D35DD00A20F0F /* MSACCrashHandlerSetupDelegate.h in Headers */,
@@ -1521,8 +1513,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C9EBA96E230D35A800A20F0F /* MSACServiceAbstract.h in Headers */,
-				C9EBA96D230D35A800A20F0F /* MSACService.h in Headers */,
 				C9EBA99D230D35FE00A20F0F /* MSACAbstractErrorLog.h in Headers */,
 				C9EBA982230D35DD00A20F0F /* MSACWrapperCrashesHelper.h in Headers */,
 				C9EBA9A1230D35FE00A20F0F /* MSACThread.h in Headers */,
@@ -1550,7 +1540,6 @@
 				C9EBA9DC230D362A00A20F0F /* MSACErrorAttachmentLog.h in Headers */,
 				C9EBA998230D35FE00A20F0F /* MSACWrapperException.h in Headers */,
 				C9EBA9CD230D361800A20F0F /* MSACCrashesUtil.h in Headers */,
-				C9EBA96C230D35A800A20F0F /* MSACAbstractLog.h in Headers */,
 				C9EBA999230D35FE00A20F0F /* MSACWrapperExceptionInternal.h in Headers */,
 				C9EBA9CE230D361800A20F0F /* MSACCrashReporter.h in Headers */,
 				C9EBA981230D35DD00A20F0F /* MSACCrashHandlerSetupDelegate.h in Headers */,
@@ -1757,11 +1746,11 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		939CA85724A4032A00CC44F8 /* AppCenter.framework */ = {
+		937D4B032566CD1C00F0A143 /* AppCenter.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
 			path = AppCenter.framework;
-			remoteRef = 939CA85624A4032A00CC44F8 /* PBXContainerItemProxy */;
+			remoteRef = 937D4B022566CD1C00F0A143 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		939CA85924A4032A00CC44F8 /* AppCenter.xctest */ = {
@@ -2570,11 +2559,6 @@
 			isa = PBXTargetDependency;
 			target = C9A91F5D230BFDB70068070D /* AppCenterCrashes macOS Framework */;
 			targetProxy = 325522A52547B30400787B9D /* PBXContainerItemProxy */;
-		};
-		386352E61D51105800D0D450 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 6E3729771D1DE83200F1E4AE /* AppCenterCrashes iOS Fat Framework */;
-			targetProxy = 386352E51D51105800D0D450 /* PBXContainerItemProxy */;
 		};
 		939CA87B24A4033700CC44F8 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

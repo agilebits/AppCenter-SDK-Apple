@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #import <Foundation/Foundation.h>
-#import "MSACConstants.h"
+#import <AppCenter/MSACConstants.h>
 
 @class MSACWrapperSdk;
 

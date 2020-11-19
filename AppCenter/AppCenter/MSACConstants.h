@@ -3,6 +3,8 @@
 
 #import <Foundation/Foundation.h>
 
+#ifndef MSACCONSTANTS
+#define MSACCONSTANTS 1
 /**
  *  Log Levels
  */
@@ -168,3 +170,5 @@ typedef NS_ENUM(NSInteger, MSACHTTPCodesNo) {
   MSACHTTPCodesNo598NetworkReadTimeoutErrorUnknown = 598,
   MSACHTTPCodesNo599NetworkConnectTimeoutErrorUnknown = 599
 } NS_SWIFT_NAME(HTTPCodesNo);
+
+#endif
