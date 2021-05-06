@@ -166,6 +166,14 @@ static NSURL *sfURL;
   XCTAssertNotNil([self.settingsMock objectForKey:key]);
 }
 
+- (void)testRemoveUpdateTokenKeyAfterAppCenterStart {
+  [self.settingsMock setObject:@1 forKey:kMSACUpdateTokenRequestIdKey];
+  [MSACDistribute sharedInstance];
+
+  // Verify that kMSACUpdateTokenRequestIdKey was deleted.
+  XCTAssertNil([self.settingsMock objectForKey:kMSACUpdateTokenRequestIdKey]);
+}
+
 - (void)testInstallURL {
 
   // If
@@ -836,6 +844,95 @@ static NSURL *sfURL;
   MSACDependencyConfiguration.httpClient = nil;
 }
 
+- (void)testCheckFromLatestReleaseInvokesDistributeNoReleaseAvailableCallback {
+
+  // If
+  XCTestExpectation *expectation = [self expectationWithDescription:@"distributeNoReleaseAvailable was invoked"];
+  MSACReleaseDetails *details = [MSACReleaseDetails new];
+  details.status = @"available";
+  id detailsMock = OCMPartialMock(details);
+  OCMStub([detailsMock isValid]).andReturn(YES);
+  id delegateMock = OCMProtocolMock(@protocol(MSACDistributeDelegate));
+  id distributeMock = OCMPartialMock(self.sut);
+
+  OCMStub([distributeMock isNewerVersion:detailsMock]).andReturn(NO);
+  OCMStub([delegateMock distributeNoReleaseAvailable:OCMOCK_ANY]).andDo(^(__unused NSInvocation *invocation) {
+    [expectation fulfill];
+  });
+
+  // When
+  [self.sut setDelegate:delegateMock];
+  [self.sut handleUpdate:detailsMock];
+
+  // Then
+  [self waitForExpectationsWithTimeout:1
+                               handler:^(NSError *error) {
+                                 if (error) {
+                                   XCTFail(@"Expectation Failed with error: %@", error);
+                                 }
+                               }];
+  [delegateMock stopMocking];
+  [detailsMock stopMocking];
+  [distributeMock stopMocking];
+}
+
+- (void)testCheckNoReleasesInvokesDistributeNoReleaseAvailableCallback {
+
+  // If
+  XCTestExpectation *invokedExpectation = [self expectationWithDescription:@"distributeNoReleaseAvailable was invoked"];
+  id distributeMock = OCMPartialMock(self.sut);
+  id delegateMock = OCMProtocolMock(@protocol(MSACDistributeDelegate));
+  // Mock the HTTP client. Use dependency configuration to simplify MSACHttpClient mock.
+  id httpClientMock = OCMPartialMock([MSACHttpClient new]);
+  [MSACDependencyConfiguration setHttpClient:httpClientMock];
+  OCMReject([distributeMock handleUpdate:OCMOCK_ANY]);
+  self.sut.appSecret = kMSACTestAppSecret;
+  [distributeMock setValue:@(YES) forKey:@"updateFlowInProgress"];
+  id reachabilityMock = OCMClassMock([MSAC_Reachability class]);
+  OCMStub([reachabilityMock reachabilityForInternetConnection]).andReturn(reachabilityMock);
+  OCMStub([reachabilityMock currentReachabilityStatus]).andReturn(ReachableViaWiFi);
+  XCTestExpectation *expectation = [self expectationWithDescription:@"Request completed."];
+
+  OCMStub([httpClientMock requestCompletedWithHttpCall:OCMOCK_ANY data:OCMOCK_ANY response:OCMOCK_ANY error:OCMOCK_ANY])
+      .andDo(^(NSInvocation *invocation) {
+        [invocation retainArguments];
+        NSString *filename = [[NSBundle bundleForClass:[self class]] pathForResource:@"error_details_no_release" ofType:@"json"];
+        NSData *data = [NSData dataWithContentsOfFile:filename];
+        [invocation setArgument:&data atIndex:3];
+        [expectation fulfill];
+      })
+      .andForwardToRealObject();
+
+  OCMStub([delegateMock distributeNoReleaseAvailable:OCMOCK_ANY]).andDo(^(__unused NSInvocation *invocation) {
+    [invokedExpectation fulfill];
+  });
+
+  // Non recoverable error.
+  [MSACHttpTestUtil stubHttp404Response];
+
+  // When
+  [self.sut setDelegate:delegateMock];
+  [self.sut startWithChannelGroup:OCMProtocolMock(@protocol(MSACChannelGroupProtocol))
+                        appSecret:kMSACTestAppSecret
+          transmissionTargetToken:nil
+                  fromApplication:YES];
+  [self.sut checkLatestRelease:kMSACTestUpdateToken distributionGroupId:kMSACTestDistributionGroupId releaseHash:kMSACTestReleaseHash];
+
+  // Then
+  [self waitForExpectationsWithTimeout:1
+                               handler:^(NSError *error) {
+                                 // Then
+                                 if (error) {
+                                   XCTFail(@"Expectation Failed with error: %@", error);
+                                 }
+                               }];
+
+  // Clean up
+  MSACDependencyConfiguration.httpClient = nil;
+  [delegateMock stopMocking];
+  [distributeMock stopMocking];
+}
+
 - (void)testCheckLatestReleaseOnRecoverableError {
 
   // If
@@ -1407,11 +1504,12 @@ static NSURL *sfURL;
   XCTAssertNil(distribute.authenticationSession);
 
   // When
-  [distribute openURLInAuthenticationSessionWith:fakeURL];
+  [distribute openURLInAuthenticationSessionWith:fakeURL usePresentationContext:NO];
 
   // Then
   XCTAssertNotNil(distribute.authenticationSession);
-  XCTAssert([distribute.authenticationSession isKindOfClass:[SFAuthenticationSession class]]);
+  XCTAssert([distribute.authenticationSession isKindOfClass:[SFAuthenticationSession class]] ||
+            [distribute.authenticationSession isKindOfClass:[ASWebAuthenticationSession class]]);
 
   // Clear
   [appCenterMock stopMocking];
@@ -2296,6 +2394,66 @@ static NSURL *sfURL;
   XCTAssertEqual(strongDelegate, delegateMock);
 }
 
+- (void)testDelegateWillExitAppIsCalled {
+
+  // If
+  XCTestExpectation *willExitAppIsCalledExpectation = [self expectationWithDescription:@"willExitAppCalled"];
+  NSString *expectedExceptionName = @"expected exception";
+  id<MSACDistributeDelegate> delegateMock = OCMProtocolMock(@protocol(MSACDistributeDelegate));
+  OCMStub([delegateMock distributeWillExitApp:self.sut]).andDo(^(__unused NSInvocation *invocation) {
+    [willExitAppIsCalledExpectation fulfill];
+
+    // We raise an exception here to prevent the 'exit(0)' call, which is happening in MSACDistribute's 'closeApp'.
+    [NSException raise:expectedExceptionName format:@"test"];
+  });
+
+  // When
+  [self.sut setDelegate:delegateMock];
+  @try {
+    [self.sut closeApp];
+  } @catch (NSException *exception) {
+    XCTAssertTrue(exception.name == expectedExceptionName);
+  }
+
+  // Then
+  [self waitForExpectationsWithTimeout:1
+                               handler:^(NSError *_Nullable error) {
+                                 if (error) {
+                                   XCTFail(@"Expectation Failed with error: %@", error);
+                                 }
+                               }];
+}
+
+- (void)testDelegateReleaseAvailableWithDetailsIsCalled {
+
+  // If
+  XCTestExpectation *releaseAvailableWithDetailsIsCalledExpectation =
+      [self expectationWithDescription:@"releaseAvailableWithDetailsIsCalled"];
+  MSACReleaseDetails *details = [MSACReleaseDetails new];
+  details.status = @"available";
+  id detailsMock = OCMPartialMock(details);
+  OCMStub([detailsMock isValid]).andReturn(YES);
+  id distributeMock = OCMPartialMock(self.sut);
+  OCMStub([distributeMock isNewerVersion:detailsMock]).andReturn(YES);
+  OCMStub([distributeMock showConfirmationAlert:detailsMock]).andDo(nil);
+  id<MSACDistributeDelegate> delegateMock = OCMProtocolMock(@protocol(MSACDistributeDelegate));
+  OCMStub([delegateMock distribute:self.sut releaseAvailableWithDetails:detailsMock]).andDo(^(__unused NSInvocation *invocation) {
+    [releaseAvailableWithDetailsIsCalledExpectation fulfill];
+  });
+
+  // When
+  [self.sut setDelegate:delegateMock];
+  [self.sut handleUpdate:detailsMock];
+
+  // Then
+  [self waitForExpectationsWithTimeout:1
+                               handler:^(NSError *_Nullable error) {
+                                 if (error) {
+                                   XCTFail(@"Expectation Failed with error: %@", error);
+                                 }
+                               }];
+}
+
 - (void)testDefaultUpdateAlert {
 
   // If
@@ -2862,7 +3020,7 @@ static NSURL *sfURL;
                   fromApplication:YES];
   NSString *urlPath = [NSString stringWithFormat:@"%@/%@", kMSACDefaultURLFormat, kMSACTestAppSecret];
   NSURLComponents *components = [NSURLComponents componentsWithString:urlPath];
-  [self.sut openURLInAuthenticationSessionWith:components.URL];
+  [self.sut openURLInAuthenticationSessionWith:components.URL usePresentationContext:NO];
 
   // Then
   OCMVerifyAll(mockLogger);
@@ -2890,7 +3048,7 @@ static NSURL *sfURL;
                   fromApplication:YES];
 
   // When
-  [self.sut openURLInAuthenticationSessionWith:fakeURL];
+  [self.sut openURLInAuthenticationSessionWith:fakeURL usePresentationContext:NO];
 
   // Then
   /* No crash. */

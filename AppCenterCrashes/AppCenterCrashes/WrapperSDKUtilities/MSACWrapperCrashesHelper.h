@@ -3,7 +3,11 @@
 
 #import <Foundation/Foundation.h>
 
+#if __has_include(<AppCenterCrashes/MSACCrashHandlerSetupDelegate.h>)
 #import <AppCenterCrashes/MSACCrashHandlerSetupDelegate.h>
+#else
+#import "MSACCrashHandlerSetupDelegate.h"
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -21,7 +25,7 @@ NS_SWIFT_NAME(WrapperCrashesHelper)
  * The crash handler setup delegate.
  *
  */
-@property(class, nonatomic) _Nullable id<MSACCrashHandlerSetupDelegate> crashHandlerSetupDelegate;
+@property(class, nonatomic, weak) _Nullable id<MSACCrashHandlerSetupDelegate> crashHandlerSetupDelegate;
 
 /**
  * Gets the crash handler setup delegate.
