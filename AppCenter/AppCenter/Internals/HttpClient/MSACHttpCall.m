@@ -14,7 +14,7 @@
                        data:(NSData *)data
              retryIntervals:(NSArray *)retryIntervals
          compressionEnabled:(BOOL)compressionEnabled
-          completionHandler:(MSACHttpRequestCompletionHandler)completionHandler {
+          completionHandler:(MSACHttpRequestCompletionHandler)completionHandler NS_SWIFT_DISABLE_ASYNC {
   if ((self = [super init])) {
     _url = url;
     _method = method;

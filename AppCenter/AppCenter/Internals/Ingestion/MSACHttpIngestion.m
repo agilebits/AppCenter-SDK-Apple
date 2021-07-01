@@ -179,7 +179,7 @@ static NSString *const kMSACPartialURLComponentsName[] = {@"scheme", @"user", @"
 - (void)sendAsync:(NSObject *)data
                  eTag:(nullable NSString *)eTag
                callId:(NSString *)callId
-    completionHandler:(MSACSendAsyncCompletionHandler)handler {
+    completionHandler:(MSACSendAsyncCompletionHandler)handler NS_SWIFT_DISABLE_ASYNC {
   @synchronized(self) {
     if (!self.enabled) {
       return;
