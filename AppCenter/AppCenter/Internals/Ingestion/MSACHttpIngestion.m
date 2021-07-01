@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #import "MSACHttpIngestion.h"
+#import "MSACAppCenterErrors.h"
 #import "MSACAppCenterInternal.h"
 #import "MSACConstants+Internal.h"
 #import "MSACHttpClientPrivate.h"
@@ -94,6 +95,12 @@ static NSString *const kMSACPartialURLComponentsName[] = {@"scheme", @"user", @"
   }
 }
 
+- (BOOL)isEnabled {
+  @synchronized(self) {
+    return _enabled && [[MSACAppCenter sharedInstance] isNetworkRequestsAllowed];
+  }
+}
+
 #pragma mark - MSACHttpIngestion
 
 - (NSURL *)buildURLWithBaseURL:(NSString *)baseURL apiPath:(NSString *)apiPath queryStrings:(NSDictionary *)queryStrings {
@@ -172,7 +179,7 @@ static NSString *const kMSACPartialURLComponentsName[] = {@"scheme", @"user", @"
 - (void)sendAsync:(NSObject *)data
                  eTag:(nullable NSString *)eTag
                callId:(NSString *)callId
-    completionHandler:(MSACSendAsyncCompletionHandler)handler {
+    completionHandler:(MSACSendAsyncCompletionHandler)handler NS_SWIFT_DISABLE_ASYNC {
   @synchronized(self) {
     if (!self.enabled) {
       return;

@@ -436,7 +436,7 @@ static int sqliteConfigurationResult = SQLITE_ERROR;
 - (void)migrateDatabase:(void *)__unused db fromVersion:(NSUInteger)__unused version {
 }
 
-- (void)setMaxStorageSize:(long)sizeInBytes completionHandler:(nullable void (^)(BOOL))completionHandler {
+- (void)setMaxStorageSize:(long)sizeInBytes completionHandler:(nullable void (^)(BOOL))completionHandler NS_SWIFT_DISABLE_ASYNC {
   int result;
   BOOL success;
   sqlite3 *db = [MSACDBStorage openDatabaseAtFileURL:self.dbFileURL withResult:&result];
