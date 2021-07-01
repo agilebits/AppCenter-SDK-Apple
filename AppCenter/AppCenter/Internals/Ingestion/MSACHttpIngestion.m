@@ -181,12 +181,7 @@ static NSString *const kMSACPartialURLComponentsName[] = {@"scheme", @"user", @"
                callId:(NSString *)callId
     completionHandler:(MSACSendAsyncCompletionHandler)handler {
   @synchronized(self) {
-    if (!self.isEnabled) {
-      MSACLogWarning([MSACAppCenter logTag], @"%@ is disabled.", NSStringFromClass([self class]));
-      NSError *error = [NSError errorWithDomain:kMSACACErrorDomain
-                                           code:MSACACDisabledErrorCode
-                                       userInfo:@{NSLocalizedDescriptionKey : kMSACACDisabledErrorDesc}];
-      handler(callId, nil, nil, error);
+    if (!self.enabled) {
       return;
     }
     NSDictionary *httpHeaders = [self getHeadersWithData:data eTag:eTag];
