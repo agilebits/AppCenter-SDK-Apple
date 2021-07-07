@@ -4,7 +4,7 @@
 #import "MSACCompression.h"
 #import "MSACAppCenterInternal.h"
 #import "MSACLogger.h"
-#import "zlib.h"
+#import <zlib.h>
 
 @implementation MSACCompression
 
